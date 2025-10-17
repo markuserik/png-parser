@@ -51,7 +51,7 @@ pub fn parseRaw(raw_file: []u8) !Png {
         const chunk: Chunks.RawChunk = try Chunks.parseChunk(&reader);
 
         switch (chunk.type) {
-            ChunkType.IHDR => { png.IHDR = try IHDR.parseIHDR(chunk); },
+           .IHDR => png.IHDR = try IHDR.parseIHDR(chunk),
         }
     }
     
