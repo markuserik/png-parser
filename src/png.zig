@@ -1,6 +1,8 @@
 const std = @import("std");
 const fs = std.fs;
 
+const endianness: std.builtin.Endian = std.builtin.Endian.big;
+
 pub const Png = struct {
 };
 
