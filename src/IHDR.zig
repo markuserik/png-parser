@@ -1,11 +1,10 @@
 const std = @import("std");
+const png = @import("png.zig");
 
 const IHDR = @This();
 
-pub fn parseIHDR(reader: *std.io.Reader, chunk_length: u32, endian: std.builtin.Endian) !IHDR {
-    _ = try reader.take(chunk_length);
-    _ = try reader.take(4);
-    _ = endian;
+pub fn parseIHDR(chunk: png.RawChunk) !IHDR {
+    _ = chunk;
     return IHDR{
     };
 }

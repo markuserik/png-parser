@@ -47,14 +47,30 @@ pub fn parseRaw(raw_file: []u8) !Png {
     _ = try reader.take(8);
 
     while (true) {
-        const chunk_length: u32 = try reader.takeInt(u32, endianness);
-        const chunk_type_raw: [4]u8 = (try reader.takeArray(4)).*;
-        const chunk_type: Chunk_type = std.meta.stringToEnum(Chunk_type, &chunk_type_raw) orelse { std.debug.print("Unsupported chunk type: {s}\n", .{chunk_type_raw}); return error.UnsupportedChunkType;};
+        const chunk: RawChunk = try parseChunk(&reader);
 
-        switch (chunk_type) {
-            Chunk_type.IHDR => { png.IHDR = try IHDR.parseIHDR(&reader, chunk_length, endianness); },
+        switch (chunk.type) {
+            Chunk_type.IHDR => { png.IHDR = try IHDR.parseIHDR(chunk); },
         }
     }
     
     return png;
+}
+
+pub const RawChunk = struct {
+    length: u32,
+    type: Chunk_type,
+    data: []u8,
+    crc: [4]u8
+};
+
+fn parseChunk(reader: *std.io.Reader) !RawChunk {
+    const length: u32 = try reader.takeInt(u32, endianness);
+    const type_raw: [4]u8 = (try reader.takeArray(4)).*;
+    return RawChunk{
+        .length = length,
+        .type = std.meta.stringToEnum(Chunk_type, &type_raw) orelse { std.debug.print("Unsupported chunk type: {s}\n", .{type_raw}); return error.UnsupportedChunkType;},
+        .data = try reader.take(length),
+        .crc = (try reader.takeArray(4)).*
+    };
 }
