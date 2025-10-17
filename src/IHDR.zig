@@ -1,6 +1,6 @@
 const std = @import("std");
-const png = @import("png.zig");
-const endianness = png.endianness;
+const Chunks = @import("chunks.zig");
+const endianness = @import("png.zig").endianness;
 
 const IHDR = @This();
 
@@ -12,7 +12,7 @@ compression_method: u8,
 filter_method: u8,
 interlace_method: u8,
 
-pub fn parseIHDR(chunk: png.RawChunk) !IHDR {
+pub fn parseIHDR(chunk: Chunks.RawChunk) !IHDR {
     var reader: std.io.Reader = std.io.Reader.fixed(chunk.data);
     return IHDR{
         .width = try reader.takeInt(u32, endianness),
