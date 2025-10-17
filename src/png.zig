@@ -4,7 +4,7 @@ const fs = std.fs;
 const Chunk_type = @import("chunk_types.zig").Chunk_type;
 const IHDR = @import("IHDR.zig");
 
-const endianness: std.builtin.Endian = std.builtin.Endian.big;
+pub const endianness: std.builtin.Endian = std.builtin.Endian.big;
 
 pub const Png = struct {
     IHDR: IHDR,
