@@ -13,7 +13,7 @@ pub fn parseChunk(reader: *std.io.Reader) !RawChunk {
     const raw_type: [4]u8 = (try reader.takeArray(4)).*;
     return RawChunk{
         .length = length,
-        .type = std.meta.stringToEnum(ChunkType, &raw_type) orelse { std.debug.print("Unsupported chunk type: {s}\n", .{raw_type}); return error.UnsupportedChunkType;},
+        .type = std.meta.stringToEnum(ChunkType, &raw_type) orelse { std.log.err("Unsupported chunk type: {s}\n", .{raw_type}); return error.UnsupportedChunkType;},
         .data = try reader.take(length),
         .crc = (try reader.takeArray(4)).*
     };
