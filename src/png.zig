@@ -1,9 +1,18 @@
 const std = @import("std");
 const fs = std.fs;
 
+const Chunk_type = @import("chunk_types.zig").Chunk_type;
+const IHDR = @import("IHDR.zig");
+
 const endianness: std.builtin.Endian = std.builtin.Endian.big;
 
 pub const Png = struct {
+    ihdr: IHDR,
+    arena: std.heap.ArenaAllocator,
+
+    pub fn deinit(self: *Png) void {
+        self.arena.deinit();
+    }
 };
 
 pub fn parseFileFromPath(file_path: []const u8) !Png {
@@ -26,10 +35,26 @@ pub fn parseFile(file: fs.File) !Png {
 }
 
 pub fn parseRaw(raw_file: []u8) !Png {
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    const allocator: std.mem.Allocator = arena.allocator();
+
+    var png: *Png = try allocator.create(Png);
+    png.arena = arena;
+
     var reader: std.io.Reader = std.io.Reader.fixed(raw_file);
 
     // Discard identifier
     _ = try reader.take(8);
+
+    while (true) {
+        const chunk_length: u32 = try reader.takeInt(u32, endianness);
+        const chunk_type_raw: [4]u8 = (try reader.takeArray(4)).*;
+        const chunk_type: Chunk_type = std.meta.stringToEnum(Chunk_type, &chunk_type_raw) orelse { std.debug.print("Unsupported chunk type: {s}\n", .{chunk_type_raw}); return error.UnsupportedChunkType;};
+
+        switch (chunk_type) {
+            Chunk_type.IHDR => { png.ihdr = try IHDR.parseIHDR(&reader, chunk_length, endianness); },
+        }
+    }
     
-    return Png{};
+    return png;
 }
