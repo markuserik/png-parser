@@ -51,14 +51,18 @@ pub fn parseRaw(raw_file: []u8) !Png {
     _ = try reader.take(8);
 
     while (true) {
-        const chunk: Chunks.RawChunk = try Chunks.parseChunk(&reader);
+        const chunk: Chunks.RawChunk = Chunks.parseChunk(&reader) catch |err| switch (err) {
+            error.EndOfStream => { return error.CorruptPNG; },
+            else => return err
+        };
 
         switch (chunk.type) {
            .IHDR => png.IHDR = try IHDR.parseIHDR(chunk),
            .PLTE => png.PLTE = try PLTE.parsePLTE(chunk, allocator),
+           .IEND => break,
            .aaaa => {}
         }
     }
     
-    return png;
+    return png.*;
 }

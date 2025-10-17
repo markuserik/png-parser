@@ -23,5 +23,6 @@ pub fn parseChunk(reader: *std.io.Reader) !RawChunk {
 pub const ChunkType = enum {
     aaaa,
     IHDR,
-    PLTE
+    PLTE,
+    IEND
 };
