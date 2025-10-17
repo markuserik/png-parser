@@ -3,12 +3,15 @@ const fs = std.fs;
 
 const Chunks = @import("chunks.zig");
 const ChunkType = Chunks.ChunkType;
+
 const IHDR = @import("IHDR.zig");
+const PLTE = @import("PLTE.zig");
 
 pub const endianness: std.builtin.Endian = std.builtin.Endian.big;
 
 pub const Png = struct {
     IHDR: IHDR,
+    PLTE: ?PLTE,
     arena: std.heap.ArenaAllocator,
 
     pub fn deinit(self: *Png) void {
@@ -52,6 +55,7 @@ pub fn parseRaw(raw_file: []u8) !Png {
 
         switch (chunk.type) {
            .IHDR => png.IHDR = try IHDR.parseIHDR(chunk),
+           .PLTE => png.PLTE = try PLTE.parsePLTE(chunk, allocator)
         }
     }
     
