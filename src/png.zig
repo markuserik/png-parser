@@ -26,6 +26,10 @@ pub fn parseFile(file: fs.File) !Png {
 }
 
 pub fn parseRaw(raw_file: []u8) !Png {
-    _ = raw_file;
+    var reader: std.io.Reader = std.io.Reader.fixed(raw_file);
+
+    // Discard identifier
+    _ = try reader.take(8);
+    
     return Png{};
 }
