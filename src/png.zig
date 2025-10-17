@@ -55,7 +55,8 @@ pub fn parseRaw(raw_file: []u8) !Png {
 
         switch (chunk.type) {
            .IHDR => png.IHDR = try IHDR.parseIHDR(chunk),
-           .PLTE => png.PLTE = try PLTE.parsePLTE(chunk, allocator)
+           .PLTE => png.PLTE = try PLTE.parsePLTE(chunk, allocator),
+           .aaaa => {}
         }
     }
     
