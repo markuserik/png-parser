@@ -2,7 +2,7 @@ const std = @import("std");
 const fs = std.fs;
 
 const Chunks = @import("chunks.zig");
-const Chunk_type = Chunks.Chunk_type;
+const ChunkType = Chunks.ChunkType;
 const IHDR = @import("IHDR.zig");
 
 pub const endianness: std.builtin.Endian = std.builtin.Endian.big;
@@ -51,7 +51,7 @@ pub fn parseRaw(raw_file: []u8) !Png {
         const chunk: Chunks.RawChunk = try Chunks.parseChunk(&reader);
 
         switch (chunk.type) {
-            Chunk_type.IHDR => { png.IHDR = try IHDR.parseIHDR(chunk); },
+            ChunkType.IHDR => { png.IHDR = try IHDR.parseIHDR(chunk); },
         }
     }
     

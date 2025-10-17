@@ -3,7 +3,7 @@ const endianness = @import("png.zig").endianness;
 
 pub const RawChunk = struct {
     length: u32,
-    type: Chunk_type,
+    type: ChunkType,
     data: []u8,
     crc: [4]u8
 };
@@ -13,12 +13,12 @@ pub fn parseChunk(reader: *std.io.Reader) !RawChunk {
     const raw_type: [4]u8 = (try reader.takeArray(4)).*;
     return RawChunk{
         .length = length,
-        .type = std.meta.stringToEnum(Chunk_type, &raw_type) orelse { std.debug.print("Unsupported chunk type: {s}\n", .{raw_type}); return error.UnsupportedChunkType;},
+        .type = std.meta.stringToEnum(ChunkType, &raw_type) orelse { std.debug.print("Unsupported chunk type: {s}\n", .{raw_type}); return error.UnsupportedChunkType;},
         .data = try reader.take(length),
         .crc = (try reader.takeArray(4)).*
     };
 }
 
-pub const Chunk_type = enum {
+pub const ChunkType = enum {
     IHDR
 };
