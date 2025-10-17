@@ -4,8 +4,8 @@ const fs = std.fs;
 pub const Png = struct {
 };
 
-pub fn parseFileFromPath(filepath: []const u8) !Png {
-    const file: fs.File = fs.cwd().openFile(filepath, .{});
+pub fn parseFileFromPath(file_path: []const u8) !Png {
+    const file: fs.File = fs.cwd().openFile(file_path, .{});
     defer file.close();
 
     return parseFile(file);
