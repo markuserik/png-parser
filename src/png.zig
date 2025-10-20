@@ -48,8 +48,8 @@ pub fn parseRaw(raw_file: []u8) !Png {
 
     var reader: std.io.Reader = std.io.Reader.fixed(raw_file);
 
-    // Discard identifier
-    _ = try reader.take(8);
+    const signature: u64 = try reader.takeInt(u64, endianness);
+    if (signature != 0x89504E470D0A1A0A) return error.CorruptPNG;
 
     while (true) {
         const chunk: Chunks.RawChunk = Chunks.parseChunk(&reader) catch |err| switch (err) {
