@@ -6,7 +6,7 @@ const PLTE = @This();
 
 entries: []Entry,
 
-pub fn parsePLTE(chunk: Chunks.RawChunk, allocator: std.mem.Allocator) !PLTE {
+pub fn parse(chunk: Chunks.RawChunk, allocator: std.mem.Allocator) !PLTE {
     var plte: *PLTE = try allocator.create(PLTE);
     var reader: std.io.Reader = std.io.Reader.fixed(chunk.data);
     if (chunk.length % 3 != 0) {

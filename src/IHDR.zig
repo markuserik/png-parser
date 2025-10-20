@@ -12,7 +12,7 @@ compression_method: u8,
 filter_method: u8,
 interlace_method: u8,
 
-pub fn parseIHDR(chunk: Chunks.RawChunk) !IHDR {
+pub fn parse(chunk: Chunks.RawChunk) !IHDR {
     var reader: std.io.Reader = std.io.Reader.fixed(chunk.data);
     return IHDR{
         .width = try reader.takeInt(u32, endianness),
