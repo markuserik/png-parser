@@ -41,6 +41,7 @@ pub fn parseFile(file: fs.File) !Png {
 pub fn parseRaw(raw_file: []u8) !Png {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     const allocator: std.mem.Allocator = arena.allocator();
+    errdefer arena.deinit();
 
     var png: *Png = try allocator.create(Png);
     png.arena = arena;
@@ -52,7 +53,7 @@ pub fn parseRaw(raw_file: []u8) !Png {
 
     while (true) {
         const chunk: Chunks.RawChunk = Chunks.parseChunk(&reader) catch |err| switch (err) {
-            error.EndOfStream => { return error.CorruptPNG; },
+            error.EndOfStream => return error.CorruptPNG,
             else => return err
         };
 
