@@ -52,7 +52,7 @@ pub fn parseRaw(raw_file: []u8) !Png {
     if (signature != 0x89504E470D0A1A0A) return error.CorruptPNG;
 
     while (true) {
-        const chunk: Chunks.RawChunk = Chunks.parseChunk(&reader) catch |err| switch (err) {
+        const chunk: Chunks.RawChunk = Chunks.parseChunk(&reader, allocator) catch |err| switch (err) {
             error.EndOfStream => return error.CorruptPNG,
             else => return err
         };
