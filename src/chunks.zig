@@ -17,6 +17,7 @@ pub const ChunkType = enum {
 
 pub fn parseChunk(reader: *std.io.Reader, allocator: std.mem.Allocator) !RawChunk {
     const length: u32 = try reader.takeInt(u32, endianness);
+    if (length >= 2_147_483_648) return error.InvalidLength;
     const raw_type: [4]u8 = (try reader.takeArray(4)).*;
     const data: []u8 = if (length != 0) try reader.take(length) else "";
     const crc: u32 = try reader.takeInt(u32, endianness);
@@ -59,7 +60,6 @@ fn verifyCRC(data: []u8, crc: u32) bool {
     const new_crc: u32 = createCRC(data);
     return crc == new_crc;
 }
-
 
 fn createCRC(data: []u8) u32 {
     var crc: u32 = 0xFFFFFFFF;
