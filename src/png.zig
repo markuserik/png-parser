@@ -1,23 +1,18 @@
 const std = @import("std");
 const fs = std.fs;
 
-const Chunks = @import("chunks.zig");
-const ChunkType = Chunks.ChunkType;
-
-const IHDR = @import("IHDR.zig");
-const PLTE = @import("PLTE.zig");
-
 pub const endianness: std.builtin.Endian = std.builtin.Endian.big;
 
-pub const Png = struct {
-    IHDR: IHDR,
-    PLTE: ?PLTE,
-    arena: std.heap.ArenaAllocator,
+const Raw = @import("raw.zig");
+pub const Png = @This();
 
-    pub fn deinit(self: *Png) void {
-        self.arena.deinit();
-    }
-};
+width: u32,
+height: u32,
+arena: std.heap.ArenaAllocator,
+
+pub fn deinit(self: *Png) void {
+    self.arena.deinit();
+}
 
 pub fn parseFileFromPath(file_path: []const u8) !Png {
     const file: fs.File = try fs.cwd().openFile(file_path, .{});
@@ -39,31 +34,11 @@ pub fn parseFile(file: fs.File) !Png {
 }
 
 pub fn parseRaw(raw_file: []u8) !Png {
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    const allocator: std.mem.Allocator = arena.allocator();
-    errdefer arena.deinit();
-
-    var png: *Png = try allocator.create(Png);
-    png.arena = arena;
-
-    var reader: std.io.Reader = std.io.Reader.fixed(raw_file);
-
-    const signature: u64 = try reader.takeInt(u64, endianness);
-    if (signature != 0x89504E470D0A1A0A) return error.CorruptPNG;
-
-    while (true) {
-        const chunk: Chunks.RawChunk = Chunks.parseChunk(&reader, allocator) catch |err| switch (err) {
-            error.EndOfStream => return error.CorruptPNG,
-            else => return err
-        };
-
-        switch (chunk.type) {
-           .IHDR => png.IHDR = try IHDR.parse(chunk),
-           .PLTE => png.PLTE = try PLTE.parse(chunk, allocator),
-           .IEND => break,
-           .aaaa => {}
-        }
-    }
+    const raw_png: Raw = try Raw.parseRaw(raw_file);
     
-    return png.*;
+    return Png{
+        .width = raw_png.ihdr.width,
+        .height = raw_png.ihdr.height,
+        .arena = raw_png.arena
+    };
 }
