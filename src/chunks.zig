@@ -18,7 +18,7 @@ pub const ChunkType = enum {
 pub fn parseChunk(reader: *std.io.Reader, allocator: std.mem.Allocator) !RawChunk {
     const length: u32 = try reader.takeInt(u32, endianness);
     const raw_type: [4]u8 = (try reader.takeArray(4)).*;
-    const data: []u8 = try reader.take(length);
+    const data: []u8 = if (length != 0) try reader.take(length) else "";
     const crc: u32 = try reader.takeInt(u32, endianness);
     
     const crc_data: []u8 = try allocator.alloc(u8, data.len + 4);
