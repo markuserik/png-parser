@@ -50,12 +50,7 @@ fn createCRCTable() [256]u32 {
     for (0..256) |i| {
         var c: u32 = i;
         for (0..8) |_| {
-            if ((c & 1) > 0) {
-                c = 0xedb88320 ^ (c >> 1);
-            }
-            else {
-                c = c >> 1;
-            }
+            c = if ((c & 1) > 0) 0xedb88320 ^ (c >> 1) else c >> 1;
         }
         table[i] = c;
     }
