@@ -7,7 +7,8 @@ const ChunkType = Chunks.ChunkType;
 const IHDR = @import("IHDR.zig");
 const PLTE = @import("PLTE.zig");
 
-pub const endianness: std.builtin.Endian = std.builtin.Endian.big;
+const root = @import("png.zig");
+const endianness = root.endianness;
 
 pub const Png = @This();
 
