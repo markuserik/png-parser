@@ -23,16 +23,14 @@ pub fn parseChunk(reader: *std.io.Reader, allocator: std.mem.Allocator) !RawChun
     
     const crc_data: []u8 = try allocator.alloc(u8, data.len + 4);
     defer allocator.free(crc_data);
-    for (0..4) |i| {
+    inline for (0..4) |i| {
         crc_data[i] = raw_type[i];
     }
     for (0..data.len) |i| {
         crc_data[i+4] = data[i];
     }
 
-    if (!verifyCRC(crc_data, crc)) {
-        return error.InvalidCRC;
-    }
+    if (!verifyCRC(crc_data, crc)) return error.InvalidCRC;
 
     return RawChunk{
         .length = length,
