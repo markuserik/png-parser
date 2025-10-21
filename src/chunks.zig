@@ -44,7 +44,7 @@ const crc_table: [256]u32 = createCRCTable();
 
 fn createCRCTable() [256]u32 {
     var table: [256]u32 = undefined;
-    @setEvalBranchQuota(10000);
+    @setEvalBranchQuota(2305);
     for (0..256) |i| {
         var c: u32 = i;
         for (0..8) |_| {
@@ -52,7 +52,6 @@ fn createCRCTable() [256]u32 {
         }
         table[i] = c;
     }
-    @setEvalBranchQuota(1000);
     return table;
 }
 
