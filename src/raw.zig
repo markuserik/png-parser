@@ -4,8 +4,8 @@ const fs = std.fs;
 const Chunks = @import("chunks.zig");
 const ChunkType = Chunks.ChunkType;
 
-const IHDR = @import("IHDR.zig");
-const PLTE = @import("PLTE.zig");
+const IHDR = @import("chunks/IHDR.zig");
+const PLTE = @import("chunks/PLTE.zig");
 
 const root = @import("png.zig");
 const endianness = root.endianness;
