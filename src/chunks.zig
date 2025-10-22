@@ -9,10 +9,13 @@ pub const RawChunk = struct {
 };
 
 pub const ChunkType = enum {
-    aaaa,
     IHDR,
     PLTE,
-    IEND
+    IEND,
+
+    tEXt,
+
+    aaaa
 };
 
 pub fn parseChunk(reader: *std.io.Reader, allocator: std.mem.Allocator) !RawChunk {

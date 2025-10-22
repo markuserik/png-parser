@@ -7,6 +7,8 @@ const ChunkType = Chunks.ChunkType;
 const IHDR = @import("chunks/IHDR.zig");
 const PLTE = @import("chunks/PLTE.zig");
 
+const tEXt = @import("chunks/tEXt.zig");
+
 const root = @import("png.zig");
 const endianness = root.endianness;
 
@@ -14,6 +16,7 @@ pub const Png = @This();
 
 ihdr: IHDR,
 plte: ?PLTE,
+text: []tEXt,
 arena: std.heap.ArenaAllocator,
 
 pub fn deinit(self: *Png) void {
@@ -22,7 +25,8 @@ pub fn deinit(self: *Png) void {
 
 const InternalPng = struct {
     ihdr: ?IHDR = null,
-    plte: ?PLTE = null
+    plte: ?PLTE = null,
+    text: std.ArrayList(tEXt) = std.ArrayList(tEXt){}
 };
 
 pub fn parseFileFromPath(file_path: []const u8, allocator: std.mem.Allocator) !Png {
@@ -59,22 +63,30 @@ pub fn parseRaw(raw_file: []u8, passed_allocator: std.mem.Allocator) !Png {
         };
 
         switch (chunk.type) {
-           .IHDR => {
-               if (png.ihdr != null) return error.MultipleIHDR;
-               png.ihdr = try IHDR.parse(chunk);
-           },
-           .PLTE => {
-               if (png.plte != null) return error.MultiplePLTE;
-               png.plte = try PLTE.parse(chunk, (png.ihdr orelse return error.IHDRNotFirst).color_type, allocator);
-           },
-           .IEND => break,
+            .IHDR => {
+                if (png.ihdr != null) return error.MultipleIHDR;
+                png.ihdr = try IHDR.parse(chunk);
+            },
+            .PLTE => {
+                if (png.plte != null) return error.MultiplePLTE;
+                png.plte = try PLTE.parse(chunk, (png.ihdr orelse return error.IHDRNotFirst).color_type, allocator);
+            },
+            .IEND => break,
+            .tEXt => {
+                try png.text.append(allocator, try tEXt.parse(chunk, allocator));
+            },
            .aaaa => {}
         }
+    }
+
+    for (png.text.items) |item| {
+        std.debug.print("Keyword: {s}, Text: {s}\n", .{item.keyword, item.text});
     }
     
     return Png{
         .ihdr = png.ihdr.?,
         .plte = png.plte,
+        .text = try png.text.toOwnedSlice(allocator),
         .arena = arena
     };
 }
