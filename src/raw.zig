@@ -80,6 +80,7 @@ pub fn parseRaw(raw_file: []u8, passed_allocator: std.mem.Allocator) !Png {
             .IEND => break,
             .bKGD => {
                 if (png.bkgd != null) return error.MultiplebKGD;
+                if (png.plte == null) return error.bKGDBeforePLTE;
                 png.bkgd = try bKGD.parse(chunk, (png.ihdr orelse return error.IHDRNotFirst).color_type);
             },
             .tIME => {
