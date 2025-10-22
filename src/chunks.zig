@@ -13,6 +13,7 @@ pub const ChunkType = enum {
     PLTE,
     IEND,
 
+    bKGD,
     tIME,
     tEXt,
 
