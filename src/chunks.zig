@@ -13,6 +13,7 @@ pub const ChunkType = enum {
     PLTE,
     IEND,
 
+    tIME,
     tEXt,
 
     aaaa
@@ -22,6 +23,7 @@ pub fn parseChunk(reader: *std.io.Reader, allocator: std.mem.Allocator) !RawChun
     const length: u32 = try reader.takeInt(u32, endianness);
     if (length >= 2_147_483_648) return error.InvalidLength;
     const raw_type: [4]u8 = (try reader.takeArray(4)).*;
+    std.debug.print("Type: {s}\n", .{&raw_type});
     const data: []u8 = if (length != 0) try reader.take(length) else "";
     const crc: u32 = try reader.takeInt(u32, endianness);
     

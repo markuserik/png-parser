@@ -7,6 +7,7 @@ const ChunkType = Chunks.ChunkType;
 const IHDR = @import("chunks/IHDR.zig");
 const PLTE = @import("chunks/PLTE.zig");
 
+const tIME = @import("chunks/tIME.zig");
 const tEXt = @import("chunks/tEXt.zig");
 
 const root = @import("png.zig");
@@ -16,6 +17,7 @@ pub const Png = @This();
 
 ihdr: IHDR,
 plte: ?PLTE,
+time: ?tIME,
 text: []tEXt,
 arena: std.heap.ArenaAllocator,
 
@@ -26,6 +28,7 @@ pub fn deinit(self: *Png) void {
 const InternalPng = struct {
     ihdr: ?IHDR = null,
     plte: ?PLTE = null,
+    time: ?tIME = null,
     text: std.ArrayList(tEXt) = std.ArrayList(tEXt){}
 };
 
@@ -72,6 +75,10 @@ pub fn parseRaw(raw_file: []u8, passed_allocator: std.mem.Allocator) !Png {
                 png.plte = try PLTE.parse(chunk, (png.ihdr orelse return error.IHDRNotFirst).color_type, allocator);
             },
             .IEND => break,
+            .tIME => {
+                if (png.time != null) return error.MultipletIME;
+                png.time = try tIME.parse(chunk);
+            },
             .tEXt => {
                 try png.text.append(allocator, try tEXt.parse(chunk, allocator));
             },
@@ -79,13 +86,10 @@ pub fn parseRaw(raw_file: []u8, passed_allocator: std.mem.Allocator) !Png {
         }
     }
 
-    for (png.text.items) |item| {
-        std.debug.print("Keyword: {s}, Text: {s}\n", .{item.keyword, item.text});
-    }
-    
     return Png{
         .ihdr = png.ihdr.?,
         .plte = png.plte,
+        .time = png.time.?,
         .text = try png.text.toOwnedSlice(allocator),
         .arena = arena
     };
