@@ -20,32 +20,32 @@ pub fn deinit(self: *Png) void {
     self.arena.deinit();
 }
 
-pub fn parseFileFromPath(file_path: []const u8) !Png {
+const InternalPng = struct {
+    ihdr: ?IHDR,
+    plte: ?PLTE
+};
+
+pub fn parseFileFromPath(file_path: []const u8, allocator: std.mem.Allocator) !Png {
     const file: fs.File = try fs.cwd().openFile(file_path, .{});
     defer file.close();
 
-    return parseFile(file);
+    return parseFile(file, allocator);
 }
 
-pub fn parseFile(file: fs.File) !Png {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const allocator: std.mem.Allocator = gpa.allocator();
-    defer _ = gpa.deinit();
-
+pub fn parseFile(file: fs.File, allocator: std.mem.Allocator) !Png {
     const raw_file: []u8 = try allocator.alloc(u8, (try file.stat()).size);
     _ = try file.read(raw_file);
     defer allocator.free(raw_file);
 
-    return parseRaw(raw_file);
+    return parseRaw(raw_file, allocator);
 }
 
-pub fn parseRaw(raw_file: []u8) !Png {
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+pub fn parseRaw(raw_file: []u8, passed_allocator: std.mem.Allocator) !Png {
+    var arena = std.heap.ArenaAllocator.init(passed_allocator);
     const allocator: std.mem.Allocator = arena.allocator();
     errdefer arena.deinit();
 
-    var png: *Png = try allocator.create(Png);
-    png.arena = arena;
+    var png: InternalPng = undefined;
 
     var reader: std.io.Reader = std.io.Reader.fixed(raw_file);
 
@@ -60,11 +60,15 @@ pub fn parseRaw(raw_file: []u8) !Png {
 
         switch (chunk.type) {
            .IHDR => png.ihdr = try IHDR.parse(chunk),
-           .PLTE => png.plte = try PLTE.parse(chunk, allocator),
+           .PLTE => png.plte = try PLTE.parse(chunk, (png.ihdr orelse return error.IHDRNotFirst).color_type, allocator),
            .IEND => break,
            .aaaa => {}
         }
     }
     
-    return png.*;
+    return Png{
+        .ihdr = png.ihdr.?,
+        .plte = png.plte,
+        .arena = arena
+    };
 }

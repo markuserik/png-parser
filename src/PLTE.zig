@@ -2,17 +2,19 @@ const std = @import("std");
 const Chunks = @import("chunks.zig");
 const endianness = @import("png.zig").endianness;
 
+const IHDR = @import("IHDR.zig");
+
 const PLTE = @This();
 
 entries: []Entry,
 
-pub fn parse(chunk: Chunks.RawChunk, allocator: std.mem.Allocator) !PLTE {
-    var plte: *PLTE = try allocator.create(PLTE);
+pub fn parse(chunk: Chunks.RawChunk, color_type: IHDR.ColorType, allocator: std.mem.Allocator) !PLTE {
+    _ = color_type;
+    var plte: PLTE = undefined;
     var reader: std.io.Reader = std.io.Reader.fixed(chunk.data);
-    if (chunk.length % 3 != 0) {
-        std.log.err("Corrupt PLTE chunk, length not divisible by 3\n", .{});
-        return error.CorruptPLTE;
-    }
+
+    if (chunk.length % 3 != 0) return error.InvalidPLTELength;
+
     const num_entries: u32 = chunk.length / 3;
     plte.entries = try allocator.alloc(Entry, num_entries);
     for (0..num_entries) |i| {
@@ -21,7 +23,7 @@ pub fn parse(chunk: Chunks.RawChunk, allocator: std.mem.Allocator) !PLTE {
         plte.entries[i].b = try reader.takeByte();
     }
 
-    return plte.*;
+    return plte;
 }
 
 pub const Entry = struct{
