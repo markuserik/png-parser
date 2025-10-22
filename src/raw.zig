@@ -77,7 +77,10 @@ pub fn parseRaw(raw_file: []u8, passed_allocator: std.mem.Allocator) !Png {
                 if (png.plte != null) return error.MultiplePLTE;
                 png.plte = try PLTE.parse(chunk, (png.ihdr orelse return error.IHDRNotFirst).color_type, allocator);
             },
-            .IEND => break,
+            .IEND => {
+                if (reader.peek(1) != error.EndOfStream) return error.DataAfterIEND;
+                break;
+            },
             .bKGD => {
                 if (png.bkgd != null) return error.MultiplebKGD;
                 if (png.plte == null) return error.bKGDBeforePLTE;
