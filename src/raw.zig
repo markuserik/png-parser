@@ -89,7 +89,7 @@ pub fn parseRaw(raw_file: []u8, passed_allocator: std.mem.Allocator) !Png {
     return Png{
         .ihdr = png.ihdr.?,
         .plte = png.plte,
-        .time = png.time.?,
+        .time = png.time,
         .text = try png.text.toOwnedSlice(allocator),
         .arena = arena
     };
