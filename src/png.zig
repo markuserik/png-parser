@@ -3,7 +3,7 @@ const fs = std.fs;
 
 pub const endianness: std.builtin.Endian = std.builtin.Endian.big;
 
-const Raw = @import("raw.zig");
+pub const Raw = @import("raw.zig");
 pub const Png = @This();
 
 width: u32,
