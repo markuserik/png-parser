@@ -8,16 +8,29 @@ width: u32,
 height: u32,
 bit_depth: u8,
 color_type: ColorType,
-compression_method: u8,
-filter_method: u8,
-interlace_method: u8,
+compression_method: CompressionMethod,
+filter_method: FilterMethod,
+interlace_method: InterlaceMethod,
 
-pub const ColorType = enum(u8){
+pub const ColorType = enum(u8) {
     Greyscale = 0,
     Truecolor = 2,
     Indexed_color = 3,
     Greyscale_with_alpha = 4,
     Truecolor_with_alpha = 6
+};
+
+pub const CompressionMethod = enum(u8) {
+    Deflate = 0
+};
+
+pub const FilterMethod = enum(u8) {
+    AdaptiveFiltering = 0
+};
+
+pub const InterlaceMethod = enum(u8) {
+    None = 0,
+    Adam7 = 1
 };
 
 pub fn parse(chunk: Chunks.RawChunk) !IHDR {
@@ -33,11 +46,11 @@ pub fn parse(chunk: Chunks.RawChunk) !IHDR {
     const color_type: ColorType = std.enums.fromInt(ColorType, try reader.takeByte()) orelse return error.InvalidColorType;
     if (!try validateBitDepth(bit_depth, color_type)) return error.InvalidBitDepthColorTypeCombination;
 
-    const compression_method: u8 = try reader.takeByte();
+    const compression_method: CompressionMethod = std.enums.fromInt(CompressionMethod, try reader.takeByte()) orelse return error.InvalidCompressionMethod;
 
-    const filter_method: u8 = try reader.takeByte();
+    const filter_method: FilterMethod = std.enums.fromInt(FilterMethod, try reader.takeByte()) orelse return error.InvalidFilterMethod;
 
-    const interlace_method: u8 = try reader.takeByte();
+    const interlace_method: InterlaceMethod = std.enums.fromInt(InterlaceMethod, try reader.takeByte()) orelse return error.InvalidInterlaceMethod;
 
     return IHDR{
         .width = width,
