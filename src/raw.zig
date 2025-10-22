@@ -21,8 +21,8 @@ pub fn deinit(self: *Png) void {
 }
 
 const InternalPng = struct {
-    ihdr: ?IHDR,
-    plte: ?PLTE
+    ihdr: ?IHDR = null,
+    plte: ?PLTE = null
 };
 
 pub fn parseFileFromPath(file_path: []const u8, allocator: std.mem.Allocator) !Png {
@@ -45,7 +45,7 @@ pub fn parseRaw(raw_file: []u8, passed_allocator: std.mem.Allocator) !Png {
     const allocator: std.mem.Allocator = arena.allocator();
     errdefer arena.deinit();
 
-    var png: InternalPng = undefined;
+    var png: InternalPng = InternalPng{};
 
     var reader: std.io.Reader = std.io.Reader.fixed(raw_file);
 
@@ -59,8 +59,14 @@ pub fn parseRaw(raw_file: []u8, passed_allocator: std.mem.Allocator) !Png {
         };
 
         switch (chunk.type) {
-           .IHDR => png.ihdr = try IHDR.parse(chunk),
-           .PLTE => png.plte = try PLTE.parse(chunk, (png.ihdr orelse return error.IHDRNotFirst).color_type, allocator),
+           .IHDR => {
+               if (png.ihdr != null) return error.MultipleIHDR;
+               png.ihdr = try IHDR.parse(chunk);
+           },
+           .PLTE => {
+               if (png.plte != null) return error.MultiplePLTE;
+               png.plte = try PLTE.parse(chunk, (png.ihdr orelse return error.IHDRNotFirst).color_type, allocator);
+           },
            .IEND => break,
            .aaaa => {}
         }
