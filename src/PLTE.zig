@@ -9,7 +9,8 @@ const PLTE = @This();
 entries: []Entry,
 
 pub fn parse(chunk: Chunks.RawChunk, color_type: IHDR.ColorType, allocator: std.mem.Allocator) !PLTE {
-    _ = color_type;
+    if (color_type == .Greyscale or color_type == .Greyscale_with_alpha) return error.PLTEPresentForInvalidColorType;
+
     var plte: PLTE = undefined;
     var reader: std.io.Reader = std.io.Reader.fixed(chunk.data);
 
