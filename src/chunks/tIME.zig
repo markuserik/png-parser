@@ -12,7 +12,7 @@ hour: u8,
 minute: u8,
 second: u8,
 
-pub fn parse(chunk: Chunks.RawChunk) !tIME {
+pub fn parse(chunk: Chunks.Chunk) !tIME {
     var reader: std.io.Reader = std.io.Reader.fixed(chunk.data);
     const year: u16 = try reader.takeInt(u16, endianness);
     const month: u8 = try reader.takeByte();

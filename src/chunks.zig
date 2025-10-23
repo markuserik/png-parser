@@ -1,7 +1,7 @@
 const std = @import("std");
 const endianness = @import("png.zig").endianness;
 
-pub const RawChunk = struct {
+pub const Chunk = struct {
     length: u32,
     type: ChunkType,
     data: []u8,
@@ -20,7 +20,7 @@ pub const ChunkType = enum {
     aaaa
 };
 
-pub fn parseChunk(reader: *std.io.Reader, allocator: std.mem.Allocator) !RawChunk {
+pub fn parse(reader: *std.io.Reader, allocator: std.mem.Allocator) !Chunk {
     const length: u32 = try reader.takeInt(u32, endianness);
     if (length >= 2_147_483_648) return error.InvalidLength;
     const raw_type: [4]u8 = (try reader.takeArray(4)).*;
@@ -39,7 +39,7 @@ pub fn parseChunk(reader: *std.io.Reader, allocator: std.mem.Allocator) !RawChun
 
     if (!verifyCRC(crc_data, crc)) return error.InvalidCRC;
 
-    return RawChunk{
+    return Chunk{
         .length = length,
         .type = std.meta.stringToEnum(ChunkType, &raw_type) orelse ChunkType.aaaa,
         .data = data,

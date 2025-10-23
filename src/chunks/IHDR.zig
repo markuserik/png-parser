@@ -33,7 +33,7 @@ pub const InterlaceMethod = enum(u8) {
     Adam7 = 1
 };
 
-pub fn parse(chunk: Chunks.RawChunk) !IHDR {
+pub fn parse(chunk: Chunks.Chunk) !IHDR {
     var reader: std.io.Reader = std.io.Reader.fixed(chunk.data);
     const width: u32 = try reader.takeInt(u32, endianness);
     if (width > 2_147_483_648 or width == 0) return error.InvalidWidth;

@@ -8,7 +8,7 @@ const PLTE = @This();
 
 entries: []Entry,
 
-pub fn parse(chunk: Chunks.RawChunk, color_type: IHDR.ColorType, allocator: std.mem.Allocator) !PLTE {
+pub fn parse(chunk: Chunks.Chunk, color_type: IHDR.ColorType, allocator: std.mem.Allocator) !PLTE {
     if (color_type == .Greyscale or color_type == .Greyscale_with_alpha) return error.PLTEPresentForInvalidColorType;
 
     var plte: PLTE = undefined;

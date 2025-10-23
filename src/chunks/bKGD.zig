@@ -14,7 +14,7 @@ blue: ?u16 = null,
 
 palette_index: ?u8 = null,
 
-pub fn parse(chunk: Chunks.RawChunk, color_type: ColorType) !bKGD {
+pub fn parse(chunk: Chunks.Chunk, color_type: ColorType) !bKGD {
     var reader: std.io.Reader = std.io.Reader.fixed(chunk.data);
     switch (color_type) {
         .Greyscale,

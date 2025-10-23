@@ -63,7 +63,7 @@ pub fn parseRaw(raw_file: []u8, passed_allocator: std.mem.Allocator) !Png {
     if (signature != 0x89504E470D0A1A0A) return error.InvalidSignature;
 
     while (true) {
-        const chunk: Chunks.RawChunk = Chunks.parseChunk(&reader, allocator) catch |err| {
+        const chunk: Chunks.Chunk = Chunks.parse(&reader, allocator) catch |err| {
             return if (err == error.EndOfStream) error.CorruptPNG else err;
         };
 
