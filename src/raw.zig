@@ -67,6 +67,8 @@ pub fn parseRaw(raw_file: []u8, passed_allocator: std.mem.Allocator) !Png {
             return if (err == error.EndOfStream) error.CorruptPNG else err;
         };
 
+        if (png.ihdr == null and chunk.type != .IHDR) return error.IHDRNotFirst;
+
         switch (chunk.type) {
             .IHDR => {
                 if (png.ihdr != null) return error.MultipleIHDR;
@@ -74,7 +76,7 @@ pub fn parseRaw(raw_file: []u8, passed_allocator: std.mem.Allocator) !Png {
             },
             .PLTE => {
                 if (png.plte != null) return error.MultiplePLTE;
-                png.plte = try PLTE.parse(chunk, (png.ihdr orelse return error.IHDRNotFirst).color_type, allocator);
+                png.plte = try PLTE.parse(chunk, png.ihdr.?.color_type, allocator);
             },
             .IEND => {
                 if (reader.peek(1) != error.EndOfStream) return error.DataAfterIEND;
@@ -83,7 +85,7 @@ pub fn parseRaw(raw_file: []u8, passed_allocator: std.mem.Allocator) !Png {
             .bKGD => {
                 if (png.bkgd != null) return error.MultiplebKGD;
                 if (png.plte == null) return error.bKGDBeforePLTE;
-                png.bkgd = try bKGD.parse(chunk, (png.ihdr orelse return error.IHDRNotFirst).color_type);
+                png.bkgd = try bKGD.parse(chunk, png.ihdr.?.color_type);
             },
             .tIME => {
                 if (png.time != null) return error.MultipletIME;
