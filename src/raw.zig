@@ -89,10 +89,12 @@ pub fn parseRaw(raw_file: []u8, passed_allocator: std.mem.Allocator) !Png {
                 break;
             },
             .cHRM => {
+                if (png.chrm != null) return error.MultiplecHRM;
                 if (png.plte != null) return error.PLTEBeforecHRM;
                 png.chrm = try cHRM.parse(chunk);
             },
             .gAMA => {
+                if (png.gama != null) return error.MultiplegAMA;
                 if (png.plte != null) return error.PLTEBeforegAMA;
                 png.gama = try gAMA.parse(chunk);
             },
