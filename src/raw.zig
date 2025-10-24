@@ -7,6 +7,7 @@ const ChunkType = Chunks.ChunkType;
 const IHDR = @import("chunks/IHDR.zig");
 const PLTE = @import("chunks/PLTE.zig");
 
+const gAMA = @import("chunks/gAMA.zig");
 const bKGD = @import("chunks/bKGD.zig");
 const tIME = @import("chunks/tIME.zig");
 const tEXt = @import("chunks/tEXt.zig");
@@ -18,6 +19,7 @@ pub const Png = @This();
 
 ihdr: IHDR,
 plte: ?PLTE,
+gama: ?gAMA,
 bkgd: ?bKGD,
 time: ?tIME,
 text: []tEXt,
@@ -30,6 +32,7 @@ pub fn deinit(self: *Png) void {
 const InternalPng = struct {
     ihdr: ?IHDR = null,
     plte: ?PLTE = null,
+    gama: ?gAMA = null,
     bkgd: ?bKGD = null,
     time: ?tIME = null,
     text: std.ArrayList(tEXt) = std.ArrayList(tEXt){}
@@ -82,6 +85,9 @@ pub fn parseRaw(raw_file: []u8, passed_allocator: std.mem.Allocator) !Png {
                 if (reader.peek(1) != error.EndOfStream) return error.DataAfterIEND;
                 break;
             },
+            .gAMA => {
+                png.gama = try gAMA.parse(chunk);
+            },
             .bKGD => {
                 if (png.bkgd != null) return error.MultiplebKGD;
                 if (png.plte == null) return error.bKGDBeforePLTE;
@@ -101,6 +107,7 @@ pub fn parseRaw(raw_file: []u8, passed_allocator: std.mem.Allocator) !Png {
     return Png{
         .ihdr = png.ihdr.?,
         .plte = png.plte,
+        .gama = png.gama,
         .bkgd = png.bkgd,
         .time = png.time,
         .text = try png.text.toOwnedSlice(allocator),
