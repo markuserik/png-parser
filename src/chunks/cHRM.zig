@@ -1,0 +1,28 @@
+const std = @import("std");
+const Chunks = @import("../chunks.zig");
+const endianness = @import("../png.zig").endianness;
+
+pub const cHRM = @This();
+
+whitePointX: u32,
+whitePointY: u32,
+redX: u32,
+redY: u32,
+greenX: u32,
+greenY: u32,
+blueX: u32,
+blueY: u32,
+
+pub fn parse(chunk: Chunks.Chunk) !cHRM {
+    var reader: std.io.Reader = std.io.Reader.fixed(chunk.data);
+    return cHRM{
+        .whitePointX = try reader.takeInt(u32, endianness),
+        .whitePointY = try reader.takeInt(u32, endianness),
+        .redX = try reader.takeInt(u32, endianness),
+        .redY = try reader.takeInt(u32, endianness),
+        .greenX = try reader.takeInt(u32, endianness),
+        .greenY = try reader.takeInt(u32, endianness),
+        .blueX = try reader.takeInt(u32, endianness),
+        .blueY = try reader.takeInt(u32, endianness)
+    };
+}

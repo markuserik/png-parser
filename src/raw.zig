@@ -7,6 +7,7 @@ const ChunkType = Chunks.ChunkType;
 const IHDR = @import("chunks/IHDR.zig");
 const PLTE = @import("chunks/PLTE.zig");
 
+const cHRM = @import("chunks/cHRM.zig");
 const gAMA = @import("chunks/gAMA.zig");
 const bKGD = @import("chunks/bKGD.zig");
 const tIME = @import("chunks/tIME.zig");
@@ -19,6 +20,7 @@ pub const Png = @This();
 
 ihdr: IHDR,
 plte: ?PLTE,
+chrm: ?cHRM,
 gama: ?gAMA,
 bkgd: ?bKGD,
 time: ?tIME,
@@ -32,6 +34,7 @@ pub fn deinit(self: *Png) void {
 const InternalPng = struct {
     ihdr: ?IHDR = null,
     plte: ?PLTE = null,
+    chrm: ?cHRM = null,
     gama: ?gAMA = null,
     bkgd: ?bKGD = null,
     time: ?tIME = null,
@@ -85,6 +88,9 @@ pub fn parseRaw(raw_file: []u8, passed_allocator: std.mem.Allocator) !Png {
                 if (reader.peek(1) != error.EndOfStream) return error.DataAfterIEND;
                 break;
             },
+            .cHRM => {
+                png.chrm = try cHRM.parse(chunk);
+            },
             .gAMA => {
                 png.gama = try gAMA.parse(chunk);
             },
@@ -107,6 +113,7 @@ pub fn parseRaw(raw_file: []u8, passed_allocator: std.mem.Allocator) !Png {
     return Png{
         .ihdr = png.ihdr.?,
         .plte = png.plte,
+        .chrm = png.chrm,
         .gama = png.gama,
         .bkgd = png.bkgd,
         .time = png.time,
