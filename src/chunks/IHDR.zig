@@ -72,7 +72,7 @@ fn validateBitDepth(bit_depth: u8, color_type: ColorType) !bool {
         },
         // 1, 2, 4, 8
         .Indexed_color => {
-            if (bit_depth % 2 != 0 and bit_depth != 1 and bit_depth > 8) return false;
+            if ((bit_depth % 2 != 0 and bit_depth != 1) or bit_depth > 8) return false;
         },
         // 8, 16
         .Truecolor,
