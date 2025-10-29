@@ -29,9 +29,9 @@ pub fn parse(chunks: std.ArrayList(Chunks.Chunk), ihdr: IHDR, allocator: std.mem
         else => unreachable
     }
 
-    bytes_per_pixel *= if (ihdr.color_type == .Truecolor_with_alpha) 4 else if (ihdr.color_type == .Greyscale_with_alpha) 2 else if (ihdr.color_type == .Indexed_color or ihdr.color_type == .Greyscale) 1 else 3;
+    const pixel_fields: u8 = if (ihdr.color_type == .Truecolor_with_alpha) 4 else if (ihdr.color_type == .Greyscale_with_alpha) 2 else if (ihdr.color_type == .Indexed_color or ihdr.color_type == .Greyscale) 1 else 3;
 
-    const scanline_length: u32 = ihdr.width*bytes_per_pixel;
+    const scanline_length: u32 = ihdr.width*(bytes_per_pixel * pixel_fields);
 
     var reconstructed_data: [][]u8 = try allocator.alloc([]u8, ihdr.height);
     for (0..reconstructed_data.len) |i| {
@@ -56,14 +56,11 @@ pub fn parse(chunks: std.ArrayList(Chunks.Chunk), ihdr: IHDR, allocator: std.mem
             1 => {
                 switch (ihdr.bit_depth) {
                     8 => {
-                        reconstructed_data[y][0] = line[0];
-                        reconstructed_data[y][1] = line[1];
-                        reconstructed_data[y][2] = line[2];
-                        var x: usize = 3;
-                        while (x < scanline_length) : (x += 3) {
-                            reconstructed_data[y][x] = line[x] +% reconstructed_data[y][x-3];
-                            reconstructed_data[y][x+1] = line[x+1] +% reconstructed_data[y][x-2];
-                            reconstructed_data[y][x+2] = line[x+2] +% reconstructed_data[y][x-1];
+                        for (0..pixel_fields) |x| {
+                            reconstructed_data[y][x] = line[x];
+                        }
+                        for (pixel_fields..scanline_length) |x| {
+                            reconstructed_data[y][x] = line[x] +% reconstructed_data[y][x-pixel_fields];
                         }
                     },
                     else => return error.BitDepthNotImplemented
@@ -72,11 +69,8 @@ pub fn parse(chunks: std.ArrayList(Chunks.Chunk), ihdr: IHDR, allocator: std.mem
             2 => {
                 switch (ihdr.bit_depth) {
                     8 => {
-                        var x: usize = 0;
-                        while (x < scanline_length) : (x += 3) {
+                        for (0..scanline_length) |x| {
                             reconstructed_data[y][x] = line[x] +% if (y != 0) reconstructed_data[y-1][x] else 0;
-                            reconstructed_data[y][x+1] = line[x+1] +% if (y != 0) reconstructed_data[y-1][x+1] else 0;
-                            reconstructed_data[y][x+2] = line[x+2] +% if (y != 0) reconstructed_data[y-1][x+2] else 0;
                         }
                     },
                     else => return error.BitDepthNotImplemented
@@ -85,14 +79,11 @@ pub fn parse(chunks: std.ArrayList(Chunks.Chunk), ihdr: IHDR, allocator: std.mem
             3 => {
                 switch (ihdr.bit_depth) {
                     8 => {
-                        reconstructed_data[y][0] = line[0] +% @divFloor(if (y != 0) reconstructed_data[y-1][0] else 0, 2);
-                        reconstructed_data[y][1] = line[1] +% @divFloor(if (y != 0) reconstructed_data[y-1][1] else 0, 2);
-                        reconstructed_data[y][2] = line[2] +% @divFloor(if (y != 0) reconstructed_data[y-1][2] else 0, 2);
-                        var x: usize = 3;
-                        while (x < scanline_length) : (x += 3) {
-                            reconstructed_data[y][x] = line[x] +% @as(u8, @intCast(@divFloor(@as(u16, reconstructed_data[y][x-3]) + @as(u16, if (y != 0) reconstructed_data[y-1][x] else 0), 2)));
-                            reconstructed_data[y][x+1] = line[x+1] +% @as(u8, @intCast(@divFloor(@as(u16, reconstructed_data[y][x-2]) + @as(u16, if (y != 0) reconstructed_data[y-1][x+1] else 0), 2)));
-                            reconstructed_data[y][x+2] = line[x+2] +% @as(u8, @intCast(@divFloor(@as(u16, reconstructed_data[y][x-1]) + @as(u16, if (y != 0) reconstructed_data[y-1][x+2] else 0), 2)));
+                        for (0..pixel_fields) |x| {
+                            reconstructed_data[y][x] = line[x] +% @divFloor(if (y != 0) reconstructed_data[y-1][x] else 0, 2);
+                        }
+                        for (pixel_fields..scanline_length) |x| {
+                            reconstructed_data[y][x] = line[x] +% @as(u8, @intCast(@divFloor(@as(u16, reconstructed_data[y][x-pixel_fields]) + @as(u16, if (y != 0) reconstructed_data[y-1][x] else 0), 2)));
                         }
                     },
                     else => return error.BitDepthNotImplemented
@@ -101,14 +92,11 @@ pub fn parse(chunks: std.ArrayList(Chunks.Chunk), ihdr: IHDR, allocator: std.mem
             4 => {
                 switch (ihdr.bit_depth) {
                     8 => {
-                        reconstructed_data[y][0] = line[0] +% paethPredictor(0, if (y != 0) reconstructed_data[y-1][0] else 0, 0);
-                        reconstructed_data[y][1] = line[1] +% paethPredictor(0, if (y != 0) reconstructed_data[y-1][1] else 0, 0);
-                        reconstructed_data[y][2] = line[2] +% paethPredictor(0, if (y != 0) reconstructed_data[y-1][2] else 0, 0);
-                        var x: usize = 3;
-                        while (x < scanline_length) : (x += 3) {
-                            reconstructed_data[y][x] = line[x] +% paethPredictor(reconstructed_data[y][x-3], reconstructed_data[y-1][x], reconstructed_data[y-1][x-3]);
-                            reconstructed_data[y][x+1] = line[x+1] +% paethPredictor(reconstructed_data[y][x-2], reconstructed_data[y-1][x+1], reconstructed_data[y-1][x-2]);
-                            reconstructed_data[y][x+2] = line[x+2] +% paethPredictor(reconstructed_data[y][x-1], reconstructed_data[y-1][x+2], reconstructed_data[y-1][x-1]);
+                        for (0..pixel_fields) |x| {
+                            reconstructed_data[y][x] = line[x] +% paethPredictor(0, if (y != 0) reconstructed_data[y-1][x] else 0, 0);
+                        }
+                        for (pixel_fields..scanline_length) |x| {
+                            reconstructed_data[y][x] = line[x] +% paethPredictor(reconstructed_data[y][x-pixel_fields], reconstructed_data[y-1][x], reconstructed_data[y-1][x-pixel_fields]);
                         }
                     },
                     else => return error.BitDepthNotImplemented
