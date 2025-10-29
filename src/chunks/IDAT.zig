@@ -91,6 +91,7 @@ pub fn parse(chunks: std.ArrayList(Chunks.Chunk), ihdr: IHDR, allocator: std.mem
     var pixels: [][]Pixel = try allocator.alloc([]Pixel, ihdr.height);
     for (0..pixels.len) |i| {
         pixels[i] = try allocator.alloc(Pixel, ihdr.width);
+        @memset(pixels[i], .{});
     }
     
     for (0..pixels.len) |y| {
@@ -182,13 +183,13 @@ fn concatChunks(chunks: std.ArrayList(Chunks.Chunk), allocator: std.mem.Allocato
 }
 
 pub const Pixel = struct {
-    r: ?u16,
-    g: ?u16,
-    b: ?u16,
+    r: ?u16 = null,
+    g: ?u16 = null,
+    b: ?u16 = null,
 
-    greyscale: ?u16,
+    greyscale: ?u16 = null,
 
-    alpha: ?u16,
+    alpha: ?u16 = null,
 
-    index: ?u8
+    index: ?u8 = null
 };
