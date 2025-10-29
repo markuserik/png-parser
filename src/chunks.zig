@@ -18,18 +18,22 @@ pub const ChunkType = enum {
     gAMA,
     bKGD,
     tIME,
-    tEXt,
-
-    aaaa
+    tEXt
 };
 
 pub fn parse(reader: *std.io.Reader, allocator: std.mem.Allocator) !Chunk {
     const length: u32 = try reader.takeInt(u32, endianness);
-    if (length >= 2_147_483_648) return error.InvalidLength;
+    if (length >= 2_147_483_648) return error.InvalidChunkDataLength;
     const raw_type: [4]u8 = (try reader.takeArray(4)).*;
     std.debug.print("Type: {s} Length: {}\n", .{&raw_type, length});
+    const chunk_type: ?ChunkType = std.meta.stringToEnum(ChunkType, &raw_type);
     const data: []u8 = if (length != 0) try reader.take(length) else "";
     const crc: u32 = try reader.takeInt(u32, endianness);
+
+    if (chunk_type == null) {
+        if (raw_type[0] >= 65 and raw_type[0] <= 90) return error.UnrecognizedCriticalChunk;
+        return error.UnrecognizedNonCriticalChunk;
+    }
     
     const crc_data: []u8 = try allocator.alloc(u8, data.len + 4);
     defer allocator.free(crc_data);
@@ -40,11 +44,11 @@ pub fn parse(reader: *std.io.Reader, allocator: std.mem.Allocator) !Chunk {
         crc_data[i+4] = data[i];
     }
 
-    if (!verifyCRC(crc_data, crc)) return error.InvalidCRC;
+    if (!verifyCRC(crc_data, crc)) return error.InvalidChunkCRC;
 
     return Chunk{
         .length = length,
-        .type = std.meta.stringToEnum(ChunkType, &raw_type) orelse ChunkType.aaaa,
+        .type = chunk_type.?,
         .data = data,
         .crc = crc
     };

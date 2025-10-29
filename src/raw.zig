@@ -72,8 +72,10 @@ pub fn parseRaw(raw_file: []u8, passed_allocator: std.mem.Allocator) !Png {
     if (signature != 0x89504E470D0A1A0A) return error.InvalidSignature;
 
     while (true) {
-        const chunk: Chunks.Chunk = Chunks.parse(&reader, allocator) catch |err| {
-            return if (err == error.EndOfStream) error.CorruptPNG else err;
+        const chunk: Chunks.Chunk = Chunks.parse(&reader, allocator) catch |err| switch (err) {
+            error.EndOfStream => return error.CorruptPNG,
+            error.UnrecognizedNonCriticalChunk => continue,
+            else => return err
         };
 
         if (png.ihdr == null and chunk.type != .IHDR) return error.IHDRNotFirst;
@@ -121,8 +123,7 @@ pub fn parseRaw(raw_file: []u8, passed_allocator: std.mem.Allocator) !Png {
             },
             .tEXt => {
                 try png.text.append(allocator, try tEXt.parse(chunk, allocator));
-            },
-           .aaaa => {}
+            }
         }
     }
 
