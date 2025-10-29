@@ -6,6 +6,7 @@ const ChunkType = Chunks.ChunkType;
 
 const IHDR = @import("chunks/IHDR.zig");
 const PLTE = @import("chunks/PLTE.zig");
+const IDAT = @import("chunks/IDAT.zig");
 
 const cHRM = @import("chunks/cHRM.zig");
 const gAMA = @import("chunks/gAMA.zig");
@@ -20,6 +21,7 @@ pub const Png = @This();
 
 ihdr: IHDR,
 plte: ?PLTE,
+idat: IDAT,
 chrm: ?cHRM,
 gama: ?gAMA,
 bkgd: ?bKGD,
@@ -34,6 +36,7 @@ pub fn deinit(self: *Png) void {
 const InternalPng = struct {
     ihdr: ?IHDR = null,
     plte: ?PLTE = null,
+    idat: ?IDAT = null,
     chrm: ?cHRM = null,
     gama: ?gAMA = null,
     bkgd: ?bKGD = null,
@@ -84,6 +87,15 @@ pub fn parseRaw(raw_file: []u8, passed_allocator: std.mem.Allocator) !Png {
                 if (png.plte != null) return error.MultiplePLTE;
                 png.plte = try PLTE.parse(chunk, png.ihdr.?.color_type, allocator);
             },
+            .IDAT => {
+                if (png.idat != null) return error.NonSequentialIDAT;
+                var chunk_list: std.ArrayList(Chunks.Chunk) = try std.ArrayList(Chunks.Chunk).initCapacity(allocator, 1);
+                try chunk_list.append(allocator, chunk);
+                while (try Chunks.peekType(&reader) == .IDAT) {
+                    try chunk_list.append(allocator, try Chunks.parse(&reader, allocator));
+                }
+                png.idat = try IDAT.parse(chunk_list, png.ihdr.?, allocator);
+            },
             .IEND => {
                 if (reader.peek(1) != error.EndOfStream) return error.DataAfterIEND;
                 break;
@@ -117,6 +129,7 @@ pub fn parseRaw(raw_file: []u8, passed_allocator: std.mem.Allocator) !Png {
     return Png{
         .ihdr = png.ihdr.?,
         .plte = png.plte,
+        .idat = png.idat.?,
         .chrm = png.chrm,
         .gama = png.gama,
         .bkgd = png.bkgd,

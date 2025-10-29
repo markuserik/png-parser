@@ -1,0 +1,108 @@
+const std = @import("std");
+const flate = std.compress.flate;
+const Chunks = @import("../chunks.zig");
+const endianness = @import("../png.zig").endianness;
+
+const IHDR = @import("IHDR.zig");
+
+const IDAT = @This();
+
+pub fn parse(chunks: std.ArrayList(Chunks.Chunk), ihdr: IHDR, allocator: std.mem.Allocator) !IDAT {
+    if (ihdr.interlace_method == .Adam7) return error.Adam7InterlaceNotImplemented;
+
+    const single_chunk = chunks.items.len == 1;
+    const data: []u8 = if (single_chunk) chunks.items[0].data else try concatChunks(chunks, allocator);
+    defer if (!single_chunk) allocator.free(data);
+
+    var raw_reader: std.io.Reader = .fixed(data);
+    var buffer: [flate.max_window_len]u8 = undefined;
+    var decompress: flate.Decompress = .init(&raw_reader, .zlib, &buffer);
+    const reader = &decompress.reader;
+
+    var bytes_per_pixel: u8 = 0;
+    switch (ihdr.bit_depth) {
+        1, 2, 4 => return error.BitDepthNotImplemented,
+        8 => bytes_per_pixel = 1,
+        16 => bytes_per_pixel = 2,
+        else => unreachable
+    }
+
+    bytes_per_pixel *= if (ihdr.color_type == .Greyscale_with_alpha or ihdr.color_type == .Truecolor_with_alpha) 4 else if (ihdr.color_type == .Indexed_color) 1 else 3;
+
+    const scanline_length: u32 = ihdr.width*bytes_per_pixel;
+
+    var reconstructed_data: [][]u8 = try allocator.alloc([]u8, ihdr.height);
+    for (0..reconstructed_data.len) |i| {
+        reconstructed_data[i] = try allocator.alloc(u8, scanline_length);
+    }
+
+    for (0..ihdr.height) |y| {
+        const filter_method: u8 = try reader.takeByte();
+        const line: []u8 = try reader.take(scanline_length);
+        switch (filter_method) {
+            0 => {
+                for (0..scanline_length) |x| {
+                    reconstructed_data[y][x] = line[x];
+                }
+            },
+            1 => {
+                reconstructed_data[y][0] = line[0];
+                for (1..scanline_length) |x| {
+                    reconstructed_data[y][x] = line[x] +% reconstructed_data[y][x-1];
+                }
+            },
+            2 => {
+                reconstructed_data[y][0] = line[0];
+                for (1..scanline_length) |x| {
+                    reconstructed_data[y][x] = line[x] +% reconstructed_data[y-1][x];
+                }
+            },
+            3 => {
+                reconstructed_data[y][0] = line[0] +% @divFloor(if (y != 0) reconstructed_data[y-1][0] else 0, 2);
+                for (1..scanline_length) |x| {
+                    const a: u8 = reconstructed_data[y][x-1];
+                    const b: u8 = if (y != 0) reconstructed_data[y-1][x] else 0;
+                    reconstructed_data[y][x] = line[x] +% @divFloor((a +% b), 2);
+                }
+            },
+            4 => {
+                reconstructed_data[y][0] = line[0] +% paethPredictor(0, if (y != 0) reconstructed_data[y-1][0] else 0, 0);
+                for (1..scanline_length) |x| {
+                    const a: u8 = reconstructed_data[y][x-1];
+                    const b: u8 = if (y != 0) reconstructed_data[y-1][x] else 0;
+                    const c: u8 = if (y != 0 and x != 0) reconstructed_data[y-1][x-1] else 0;
+                    reconstructed_data[y][x] = line[x] +% paethPredictor(a, b, c);
+                }
+            },
+            else => {
+                return error.InvalidFilterMethod;
+            }
+        }
+    }
+
+    return IDAT{};
+}
+
+fn paethPredictor(a: i16, b: i16, c: i16) u8 {
+    const p = a + b - c;
+    const pa = @abs(p - a);
+    const pb = @abs(p - b);
+    const pc = @abs(p - c);
+    const pr: u8 = @intCast(if (pa <= pb and pa <= pc) a else if (pb <= pc) b else c);
+    return pr;
+}
+
+fn concatChunks(chunks: std.ArrayList(Chunks.Chunk), allocator: std.mem.Allocator) ![]u8 {
+    var data_len: u32 = 0;
+    for (chunks.items) |chunk| data_len += chunk.length;
+
+    const data: []u8 = try allocator.alloc(u8, data_len);
+    var data_cursor: u32 = 0;
+    for (chunks.items) |chunk| {
+        for (0..chunk.length) |i| {
+            data[data_cursor+i] = chunk.data[i];
+        }
+        data_cursor += chunk.length;
+    }
+    return data;
+}
