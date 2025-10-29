@@ -47,7 +47,6 @@ pub fn parse(chunks: std.ArrayList(Chunks.Chunk), ihdr: IHDR, allocator: std.mem
     for (0..ihdr.height) |y| {
         const filter_method: u8 = try reader.takeByte();
         const line: []u8 = try reader.take(scanline_length);
-        std.debug.print("Filter method: {}\n", .{filter_method});
         switch (filter_method) {
             0 => {
                 for (0..scanline_length) |x| {
