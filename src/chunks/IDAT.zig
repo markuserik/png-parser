@@ -29,7 +29,7 @@ pub fn parse(chunks: std.ArrayList(Chunks.Chunk), ihdr: IHDR, allocator: std.mem
         else => unreachable
     }
 
-    bytes_per_pixel *= if (ihdr.color_type == .Truecolor_with_alpha) 4 else if(ihdr.color_type == .Greyscale_with_alpha) 2 else if (ihdr.color_type == .Indexed_color or ihdr.color_type == .Greyscale) 1 else 3;
+    bytes_per_pixel *= if (ihdr.color_type == .Truecolor_with_alpha) 4 else if (ihdr.color_type == .Greyscale_with_alpha) 2 else if (ihdr.color_type == .Indexed_color or ihdr.color_type == .Greyscale) 1 else 3;
 
     const scanline_length: u32 = ihdr.width*bytes_per_pixel;
 
@@ -47,6 +47,7 @@ pub fn parse(chunks: std.ArrayList(Chunks.Chunk), ihdr: IHDR, allocator: std.mem
     for (0..ihdr.height) |y| {
         const filter_method: u8 = try reader.takeByte();
         const line: []u8 = try reader.take(scanline_length);
+        std.debug.print("Filter method: {}\n", .{filter_method});
         switch (filter_method) {
             0 => {
                 for (0..scanline_length) |x| {
@@ -54,32 +55,64 @@ pub fn parse(chunks: std.ArrayList(Chunks.Chunk), ihdr: IHDR, allocator: std.mem
                 }
             },
             1 => {
-                reconstructed_data[y][0] = line[0];
-                for (1..scanline_length) |x| {
-                    reconstructed_data[y][x] = line[x] +% reconstructed_data[y][x-1];
+                switch (ihdr.bit_depth) {
+                    8 => {
+                        reconstructed_data[y][0] = line[0];
+                        reconstructed_data[y][1] = line[1];
+                        reconstructed_data[y][2] = line[2];
+                        var x: usize = 3;
+                        while (x < scanline_length) : (x += 3) {
+                            reconstructed_data[y][x] = line[x] +% reconstructed_data[y][x-3];
+                            reconstructed_data[y][x+1] = line[x+1] +% reconstructed_data[y][x-2];
+                            reconstructed_data[y][x+2] = line[x+2] +% reconstructed_data[y][x-1];
+                        }
+                    },
+                    else => return error.BitDepthNotImplemented
                 }
             },
             2 => {
-                reconstructed_data[y][0] = line[0];
-                for (1..scanline_length) |x| {
-                    reconstructed_data[y][x] = line[x] +% reconstructed_data[y-1][x];
+                switch (ihdr.bit_depth) {
+                    8 => {
+                        var x: usize = 0;
+                        while (x < scanline_length) : (x += 3) {
+                            reconstructed_data[y][x] = line[x] +% if (y != 0) reconstructed_data[y-1][x] else 0;
+                            reconstructed_data[y][x+1] = line[x+1] +% if (y != 0) reconstructed_data[y-1][x+1] else 0;
+                            reconstructed_data[y][x+2] = line[x+2] +% if (y != 0) reconstructed_data[y-1][x+2] else 0;
+                        }
+                    },
+                    else => return error.BitDepthNotImplemented
                 }
             },
             3 => {
-                reconstructed_data[y][0] = line[0] +% @divFloor(if (y != 0) reconstructed_data[y-1][0] else 0, 2);
-                for (1..scanline_length) |x| {
-                    const a: u8 = reconstructed_data[y][x-1];
-                    const b: u8 = if (y != 0) reconstructed_data[y-1][x] else 0;
-                    reconstructed_data[y][x] = line[x] +% @divFloor((a +% b), 2);
+                switch (ihdr.bit_depth) {
+                    8 => {
+                        reconstructed_data[y][0] = line[0] +% @divFloor(if (y != 0) reconstructed_data[y-1][0] else 0, 2);
+                        reconstructed_data[y][1] = line[1] +% @divFloor(if (y != 0) reconstructed_data[y-1][1] else 0, 2);
+                        reconstructed_data[y][2] = line[2] +% @divFloor(if (y != 0) reconstructed_data[y-1][2] else 0, 2);
+                        var x: usize = 3;
+                        while (x < scanline_length) : (x += 3) {
+                            reconstructed_data[y][x] = line[x] +% @as(u8, @intCast(@divFloor(@as(u16, reconstructed_data[y][x-3]) + @as(u16, if (y != 0) reconstructed_data[y-1][x] else 0), 2)));
+                            reconstructed_data[y][x+1] = line[x+1] +% @as(u8, @intCast(@divFloor(@as(u16, reconstructed_data[y][x-2]) + @as(u16, if (y != 0) reconstructed_data[y-1][x+1] else 0), 2)));
+                            reconstructed_data[y][x+2] = line[x+2] +% @as(u8, @intCast(@divFloor(@as(u16, reconstructed_data[y][x-1]) + @as(u16, if (y != 0) reconstructed_data[y-1][x+2] else 0), 2)));
+                        }
+                    },
+                    else => return error.BitDepthNotImplemented
                 }
             },
             4 => {
-                reconstructed_data[y][0] = line[0] +% paethPredictor(0, if (y != 0) reconstructed_data[y-1][0] else 0, 0);
-                for (1..scanline_length) |x| {
-                    const a: u8 = reconstructed_data[y][x-1];
-                    const b: u8 = if (y != 0) reconstructed_data[y-1][x] else 0;
-                    const c: u8 = if (y != 0 and x != 0) reconstructed_data[y-1][x-1] else 0;
-                    reconstructed_data[y][x] = line[x] +% paethPredictor(a, b, c);
+                switch (ihdr.bit_depth) {
+                    8 => {
+                        reconstructed_data[y][0] = line[0] +% paethPredictor(0, if (y != 0) reconstructed_data[y-1][0] else 0, 0);
+                        reconstructed_data[y][1] = line[1] +% paethPredictor(0, if (y != 0) reconstructed_data[y-1][1] else 0, 0);
+                        reconstructed_data[y][2] = line[2] +% paethPredictor(0, if (y != 0) reconstructed_data[y-1][2] else 0, 0);
+                        var x: usize = 3;
+                        while (x < scanline_length) : (x += 3) {
+                            reconstructed_data[y][x] = line[x] +% paethPredictor(reconstructed_data[y][x-3], reconstructed_data[y-1][x], reconstructed_data[y-1][x-3]);
+                            reconstructed_data[y][x+1] = line[x+1] +% paethPredictor(reconstructed_data[y][x-2], reconstructed_data[y-1][x+1], reconstructed_data[y-1][x-2]);
+                            reconstructed_data[y][x+2] = line[x+2] +% paethPredictor(reconstructed_data[y][x-1], reconstructed_data[y-1][x+2], reconstructed_data[y-1][x-1]);
+                        }
+                    },
+                    else => return error.BitDepthNotImplemented
                 }
             },
             else => {
@@ -163,7 +196,9 @@ fn paethPredictor(a: i16, b: i16, c: i16) u8 {
     const pa = @abs(p - a);
     const pb = @abs(p - b);
     const pc = @abs(p - c);
-    const pr: u8 = @intCast(if (pa <= pb and pa <= pc) a else if (pb <= pc) b else c);
+    const pr: u8 = @intCast(if (pa <= pb and pa <= pc) a
+                            else if (pb <= pc) b 
+                            else c);
     return pr;
 }
 
