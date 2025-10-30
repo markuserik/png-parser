@@ -25,7 +25,6 @@ pub fn parse(reader: *std.io.Reader, allocator: std.mem.Allocator) !Chunk {
     const length: u32 = try reader.takeInt(u32, endianness);
     if (length >= 2_147_483_648) return error.InvalidChunkDataLength;
     const raw_type: [4]u8 = (try reader.takeArray(4)).*;
-    std.debug.print("Type: {s} Length: {}\n", .{&raw_type, length});
     const chunk_type: ?ChunkType = std.meta.stringToEnum(ChunkType, &raw_type);
     const data: []u8 = if (length != 0) try reader.take(length) else "";
     const crc: u32 = try reader.takeInt(u32, endianness);
