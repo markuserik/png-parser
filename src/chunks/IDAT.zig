@@ -29,9 +29,9 @@ pub fn parse(chunks: std.ArrayList(Chunks.Chunk), ihdr: IHDR, allocator: std.mem
         else => unreachable
     }
 
-    const pixel_fields: u8 = if (ihdr.color_type == .Truecolor_with_alpha) 4 else if (ihdr.color_type == .Greyscale_with_alpha) 2 else if (ihdr.color_type == .Indexed_color or ihdr.color_type == .Greyscale) 1 else 3;
+    bytes_per_pixel *= if (ihdr.color_type == .Truecolor_with_alpha) 4 else if (ihdr.color_type == .Greyscale_with_alpha) 2 else if (ihdr.color_type == .Indexed_color or ihdr.color_type == .Greyscale) 1 else 3;
 
-    const scanline_length: u32 = ihdr.width*(bytes_per_pixel * pixel_fields);
+    const scanline_length: u32 = ihdr.width*bytes_per_pixel;
 
     var reconstructed_data: [][]u8 = try allocator.alloc([]u8, ihdr.height);
     for (0..reconstructed_data.len) |i| {
@@ -45,9 +45,9 @@ pub fn parse(chunks: std.ArrayList(Chunks.Chunk), ihdr: IHDR, allocator: std.mem
     }
 
     for (0..ihdr.height) |y| {
-        const filter_method: u8 = try reader.takeByte();
+        const filter_type: u8 = try reader.takeByte();
         const line: []u8 = try reader.take(scanline_length);
-        switch (filter_method) {
+        switch (filter_type) {
             0 => {
                 for (0..scanline_length) |x| {
                     reconstructed_data[y][x] = line[x];
@@ -55,12 +55,12 @@ pub fn parse(chunks: std.ArrayList(Chunks.Chunk), ihdr: IHDR, allocator: std.mem
             },
             1 => {
                 switch (ihdr.bit_depth) {
-                    8 => {
-                        for (0..pixel_fields) |x| {
+                    8, 16 => {
+                        for (0..bytes_per_pixel) |x| {
                             reconstructed_data[y][x] = line[x];
                         }
-                        for (pixel_fields..scanline_length) |x| {
-                            reconstructed_data[y][x] = line[x] +% reconstructed_data[y][x-pixel_fields];
+                        for (bytes_per_pixel..scanline_length) |x| {
+                            reconstructed_data[y][x] = line[x] +% reconstructed_data[y][x-bytes_per_pixel];
                         }
                     },
                     else => return error.BitDepthNotImplemented
@@ -68,7 +68,7 @@ pub fn parse(chunks: std.ArrayList(Chunks.Chunk), ihdr: IHDR, allocator: std.mem
             },
             2 => {
                 switch (ihdr.bit_depth) {
-                    8 => {
+                    8, 16 => {
                         for (0..scanline_length) |x| {
                             reconstructed_data[y][x] = line[x] +% if (y != 0) reconstructed_data[y-1][x] else 0;
                         }
@@ -78,12 +78,12 @@ pub fn parse(chunks: std.ArrayList(Chunks.Chunk), ihdr: IHDR, allocator: std.mem
             },
             3 => {
                 switch (ihdr.bit_depth) {
-                    8 => {
-                        for (0..pixel_fields) |x| {
+                    8, 16 => {
+                        for (0..bytes_per_pixel) |x| {
                             reconstructed_data[y][x] = line[x] +% @divFloor(if (y != 0) reconstructed_data[y-1][x] else 0, 2);
                         }
-                        for (pixel_fields..scanline_length) |x| {
-                            reconstructed_data[y][x] = line[x] +% @as(u8, @intCast(@divFloor(@as(u16, reconstructed_data[y][x-pixel_fields]) + @as(u16, if (y != 0) reconstructed_data[y-1][x] else 0), 2)));
+                        for (bytes_per_pixel..scanline_length) |x| {
+                            reconstructed_data[y][x] = line[x] +% @as(u8, @intCast(@divFloor(@as(u16, reconstructed_data[y][x-bytes_per_pixel]) + @as(u16, if (y != 0) reconstructed_data[y-1][x] else 0), 2)));
                         }
                     },
                     else => return error.BitDepthNotImplemented
@@ -91,20 +91,18 @@ pub fn parse(chunks: std.ArrayList(Chunks.Chunk), ihdr: IHDR, allocator: std.mem
             },
             4 => {
                 switch (ihdr.bit_depth) {
-                    8 => {
-                        for (0..pixel_fields) |x| {
+                    8, 16 => {
+                        for (0..bytes_per_pixel) |x| {
                             reconstructed_data[y][x] = line[x] +% paethPredictor(0, if (y != 0) reconstructed_data[y-1][x] else 0, 0);
                         }
-                        for (pixel_fields..scanline_length) |x| {
-                            reconstructed_data[y][x] = line[x] +% paethPredictor(reconstructed_data[y][x-pixel_fields], reconstructed_data[y-1][x], reconstructed_data[y-1][x-pixel_fields]);
+                        for (bytes_per_pixel..scanline_length) |x| {
+                            reconstructed_data[y][x] = line[x] +% paethPredictor(reconstructed_data[y][x-bytes_per_pixel], reconstructed_data[y-1][x], reconstructed_data[y-1][x-bytes_per_pixel]);
                         }
                     },
                     else => return error.BitDepthNotImplemented
                 }
             },
-            else => {
-                return error.InvalidFilterMethod;
-            }
+            else => return error.InvalidFilterType
         }
     }
  
