@@ -127,14 +127,14 @@ pub fn parse(chunks: std.ArrayList(Chunks.Chunk), ihdr: IHDR, allocator: std.mem
                 },
                 .Truecolor => {
                     if (ihdr.bit_depth == 8) {
-                        pixels[y][x].r = try row_reader.takeByte();
-                        pixels[y][x].g = try row_reader.takeByte();
-                        pixels[y][x].b = try row_reader.takeByte();
+                        pixels[y][x].r8 = try row_reader.takeByte();
+                        pixels[y][x].g8 = try row_reader.takeByte();
+                        pixels[y][x].b8 = try row_reader.takeByte();
                     }
                     else {
-                        pixels[y][x].r = try row_reader.takeInt(u16, endianness);
-                        pixels[y][x].g = try row_reader.takeInt(u16, endianness);
-                        pixels[y][x].b = try row_reader.takeInt(u16, endianness);
+                        pixels[y][x].r16 = try row_reader.takeInt(u16, endianness);
+                        pixels[y][x].g16 = try row_reader.takeInt(u16, endianness);
+                        pixels[y][x].b16 = try row_reader.takeInt(u16, endianness);
                     }
                 },
                 .Indexed_color => {
@@ -146,25 +146,25 @@ pub fn parse(chunks: std.ArrayList(Chunks.Chunk), ihdr: IHDR, allocator: std.mem
                 .Greyscale_with_alpha => {
                     if (ihdr.bit_depth == 8) {
                         pixels[y][x].greyscale = try row_reader.takeByte();
-                        pixels[y][x].alpha = try row_reader.takeByte();
+                        pixels[y][x].alpha8 = try row_reader.takeByte();
                     }
                     else {
                         pixels[y][x].greyscale = try row_reader.takeInt(u16, endianness);
-                        pixels[y][x].alpha = try row_reader.takeInt(u16, endianness);
+                        pixels[y][x].alpha16 = try row_reader.takeInt(u16, endianness);
                     }
                 },
                 .Truecolor_with_alpha => {
                     if (ihdr.bit_depth == 8) {
-                        pixels[y][x].r = try row_reader.takeByte();
-                        pixels[y][x].g = try row_reader.takeByte();
-                        pixels[y][x].b = try row_reader.takeByte();
-                        pixels[y][x].alpha = try row_reader.takeByte();
+                        pixels[y][x].r8 = try row_reader.takeByte();
+                        pixels[y][x].g8 = try row_reader.takeByte();
+                        pixels[y][x].b8 = try row_reader.takeByte();
+                        pixels[y][x].alpha8 = try row_reader.takeByte();
                     }
                     else {
-                        pixels[y][x].r = try row_reader.takeInt(u16, endianness);
-                        pixels[y][x].g = try row_reader.takeInt(u16, endianness);
-                        pixels[y][x].b = try row_reader.takeInt(u16, endianness);
-                        pixels[y][x].alpha = try row_reader.takeInt(u16, endianness);
+                        pixels[y][x].r16 = try row_reader.takeInt(u16, endianness);
+                        pixels[y][x].g16 = try row_reader.takeInt(u16, endianness);
+                        pixels[y][x].b16 = try row_reader.takeInt(u16, endianness);
+                        pixels[y][x].alpha16 = try row_reader.takeInt(u16, endianness);
                     }
                 }
             }
@@ -203,13 +203,17 @@ fn concatChunks(chunks: std.ArrayList(Chunks.Chunk), allocator: std.mem.Allocato
 }
 
 pub const Pixel = struct {
-    r: ?u16 = null,
-    g: ?u16 = null,
-    b: ?u16 = null,
+    r8: ?u8 = null,
+    g8: ?u8 = null,
+    b8: ?u8 = null,
+    r16: ?u16 = null,
+    g16: ?u16 = null,
+    b16: ?u16 = null,
 
     greyscale: ?u16 = null,
 
-    alpha: ?u16 = null,
+    alpha8: ?u8 = null,
+    alpha16: ?u16 = null,
 
     index: ?u8 = null
 };
