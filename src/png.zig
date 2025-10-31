@@ -9,6 +9,7 @@ pub const Png = @This();
 width: u32,
 height: u32,
 pixels: [][]Pixel,
+raw: Raw,
 arena: std.heap.ArenaAllocator,
 
 pub fn deinit(self: *Png) void {
@@ -38,6 +39,7 @@ pub fn parseRaw(raw_file: []u8, allocator: std.mem.Allocator) !Png {
         .width = raw_png.ihdr.width,
         .height = raw_png.ihdr.height,
         .pixels = pixels,
+        .raw = raw_png,
         .arena = raw_png.arena
     };
 }
