@@ -59,8 +59,8 @@ pub fn parseFile(file: fs.File, allocator: std.mem.Allocator) !Png {
     return parseRaw(raw_file, allocator);
 }
 
-pub fn parseRaw(raw_file: []u8, passed_allocator: std.mem.Allocator) !Png {
-    var arena = std.heap.ArenaAllocator.init(passed_allocator);
+pub fn parseRaw(raw_file: []u8, input_allocator: std.mem.Allocator) !Png {
+    var arena = std.heap.ArenaAllocator.init(input_allocator);
     const allocator: std.mem.Allocator = arena.allocator();
     errdefer arena.deinit();
 
