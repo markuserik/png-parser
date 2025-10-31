@@ -20,7 +20,7 @@ const std = @import("std");
 const png_parser = @import("png_parser");
 
 pub fn main() !void {
-    const png: png_parser.Png = try png_parser.parseFileFromPath("images/test.png");
+    const png: png_parser.Png = try png_parser.parseFileFromPath("images/test.png", std.heap.page_allocator);
     defer png.deinit();
 
     std.debug.print("Height: {}, Width: {}\n", .{png.height, png.width});
@@ -34,7 +34,7 @@ const std = @import("std");
 const png_parser = @import("png_parser").Raw;
 
 pub fn main() !void {
-    const png: png_parser.Png = try png_parser.parseFileFromPath("images/test.png");
+    const png: png_parser.Png = try png_parser.parseFileFromPath("images/test.png", std.heap.page_allocator);
     defer png.deinit();
 
     std.debug.print("Height: {}, Width: {}\n", .{png.ihdr.height, png.ihdr.width});
