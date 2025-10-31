@@ -39,4 +39,4 @@ pub fn main() !void {
 
     std.debug.print("Height: {}, Width: {}\n", .{png.ihdr.height, png.ihdr.width});
 }
-`
+```
