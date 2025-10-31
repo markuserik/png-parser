@@ -26,7 +26,7 @@ pub fn main() !void {
     std.debug.print("Height: {}, Width: {}\n", .{png.height, png.width});
 }
 ```
-This way the parser will handle the png logic and provide a struct containing a 2d array of pixels (plus both height and width for convenience), the raw png values are still available in this struct.
+This way the parser will handle the png logic and provide a struct containing a 2d array of pixels (plus both height and width for convenience), the raw png struct is still available in this struct.
 
 Alternatively, use png_parser.Raw to get a raw struct with all the raw values.
 ```zig
