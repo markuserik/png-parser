@@ -17,6 +17,20 @@ const tEXt = @import("chunks/tEXt.zig");
 const root = @import("png.zig");
 const endianness = root.endianness;
 
+pub const ChunkOrderingError = error{
+    IHDRNotFirst,
+    MultipleIHDR,
+    MultiplePLTE,
+    NonSequentialIDAT,
+    MultiplecHRM,
+    PLTEBeforecHRM,
+    MultiplegAMA,
+    PLTEBeforegAMA,
+    MultiplebKGD,
+    bKGDBeforePLTE,
+    MultipletIME
+};
+
 pub const Png = @This();
 
 ihdr: IHDR,
@@ -78,19 +92,19 @@ pub fn parseRaw(raw_file: []u8, input_allocator: std.mem.Allocator) !Png {
             else => return err
         };
 
-        if (png.ihdr == null and chunk.type != .IHDR) return error.IHDRNotFirst;
+        if (png.ihdr == null and chunk.type != .IHDR) return ChunkOrderingError.IHDRNotFirst;
 
         switch (chunk.type) {
             .IHDR => {
-                if (png.ihdr != null) return error.MultipleIHDR;
+                if (png.ihdr != null) return ChunkOrderingError.MultipleIHDR;
                 png.ihdr = try IHDR.parse(chunk);
             },
             .PLTE => {
-                if (png.plte != null) return error.MultiplePLTE;
+                if (png.plte != null) return ChunkOrderingError.MultiplePLTE;
                 png.plte = try PLTE.parse(chunk, png.ihdr.?.color_type, allocator);
             },
             .IDAT => {
-                if (png.idat != null) return error.NonSequentialIDAT;
+                if (png.idat != null) return ChunkOrderingError.NonSequentialIDAT;
                 var chunk_list: std.ArrayList(Chunks.Chunk) = try std.ArrayList(Chunks.Chunk).initCapacity(allocator, 1);
                 try chunk_list.append(allocator, chunk);
                 while (try Chunks.peekType(&reader) == .IDAT) {
@@ -103,22 +117,22 @@ pub fn parseRaw(raw_file: []u8, input_allocator: std.mem.Allocator) !Png {
                 break;
             },
             .cHRM => {
-                if (png.chrm != null) return error.MultiplecHRM;
-                if (png.plte != null) return error.PLTEBeforecHRM;
+                if (png.chrm != null) return ChunkOrderingError.MultiplecHRM;
+                if (png.plte != null) return ChunkOrderingError.PLTEBeforecHRM;
                 png.chrm = try cHRM.parse(chunk);
             },
             .gAMA => {
-                if (png.gama != null) return error.MultiplegAMA;
-                if (png.plte != null) return error.PLTEBeforegAMA;
+                if (png.gama != null) return ChunkOrderingError.MultiplegAMA;
+                if (png.plte != null) return ChunkOrderingError.PLTEBeforegAMA;
                 png.gama = try gAMA.parse(chunk);
             },
             .bKGD => {
-                if (png.bkgd != null) return error.MultiplebKGD;
-                if (png.plte == null) return error.bKGDBeforePLTE;
+                if (png.bkgd != null) return ChunkOrderingError.MultiplebKGD;
+                if (png.plte == null) return ChunkOrderingError.bKGDBeforePLTE;
                 png.bkgd = try bKGD.parse(chunk, png.ihdr.?.color_type);
             },
             .tIME => {
-                if (png.time != null) return error.MultipletIME;
+                if (png.time != null) return ChunkOrderingError.MultipletIME;
                 png.time = try tIME.parse(chunk);
             },
             .tEXt => {
