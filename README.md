@@ -2,7 +2,7 @@
 A zig parsing library for .png files.
 
 # Supported functionality
-Currently only images with color type Truecolor and Truecolor_with_alpha.
+Currently only images with color type truecolor and truecolor with alpha.
 Only images not relying on any ancilliary chunks are supported.
 Also, interlace method Adam7 is not supported.
 
