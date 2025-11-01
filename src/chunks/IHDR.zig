@@ -1,6 +1,5 @@
 const std = @import("std");
 const Chunks = @import("../chunks.zig");
-const endianness = @import("../png.zig").endianness;
 
 const IHDR = @This();
 
@@ -33,12 +32,12 @@ pub const InterlaceMethod = enum(u8) {
     Adam7 = 1
 };
 
-pub fn parse(chunk: Chunks.Chunk) !IHDR {
+pub fn parse(chunk: Chunks.Chunk, endian: std.builtin.Endian) !IHDR {
     var reader: std.io.Reader = std.io.Reader.fixed(chunk.data);
-    const width: u32 = try reader.takeInt(u32, endianness);
+    const width: u32 = try reader.takeInt(u32, endian);
     if (width > 2_147_483_648 or width == 0) return error.InvalidWidth;
 
-    const height: u32 = try reader.takeInt(u32, endianness);
+    const height: u32 = try reader.takeInt(u32, endian);
     if (height > 2_147_483_648 or height == 0) return error.InvalidHeight;
 
     const bit_depth: u8 = try reader.takeByte();

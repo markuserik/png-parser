@@ -1,7 +1,6 @@
 const std = @import("std");
 const flate = std.compress.flate;
 const Chunks = @import("../chunks.zig");
-const endianness = @import("../png.zig").endianness;
 
 const IHDR = @import("IHDR.zig");
 
@@ -9,7 +8,7 @@ const IDAT = @This();
 
 pixels: [][]Pixel,
 
-pub fn parse(chunks: std.ArrayList(Chunks.Chunk), ihdr: IHDR, allocator: std.mem.Allocator) !IDAT {
+pub fn parse(chunks: std.ArrayList(Chunks.Chunk), ihdr: IHDR, allocator: std.mem.Allocator, endian: std.builtin.Endian) !IDAT {
     if (ihdr.interlace_method == .Adam7) return error.Adam7InterlaceNotImplemented;
 
     const single_chunk = chunks.items.len == 1;
@@ -121,7 +120,7 @@ pub fn parse(chunks: std.ArrayList(Chunks.Chunk), ihdr: IHDR, allocator: std.mem
                         pixels[y][x].greyscale = try row_reader.takeByte();
                     }
                     else if (ihdr.bit_depth == 16) {
-                        pixels[y][x].greyscale = try row_reader.takeInt(u16, endianness);
+                        pixels[y][x].greyscale = try row_reader.takeInt(u16, endian);
                     }
                     else return error.GreyscaleBitDepthNotImplemented;
                 },
@@ -132,9 +131,9 @@ pub fn parse(chunks: std.ArrayList(Chunks.Chunk), ihdr: IHDR, allocator: std.mem
                         pixels[y][x].b8 = try row_reader.takeByte();
                     }
                     else {
-                        pixels[y][x].r16 = try row_reader.takeInt(u16, endianness);
-                        pixels[y][x].g16 = try row_reader.takeInt(u16, endianness);
-                        pixels[y][x].b16 = try row_reader.takeInt(u16, endianness);
+                        pixels[y][x].r16 = try row_reader.takeInt(u16, endian);
+                        pixels[y][x].g16 = try row_reader.takeInt(u16, endian);
+                        pixels[y][x].b16 = try row_reader.takeInt(u16, endian);
                     }
                 },
                 .Indexed_color => {
@@ -149,8 +148,8 @@ pub fn parse(chunks: std.ArrayList(Chunks.Chunk), ihdr: IHDR, allocator: std.mem
                         pixels[y][x].alpha8 = try row_reader.takeByte();
                     }
                     else {
-                        pixels[y][x].greyscale = try row_reader.takeInt(u16, endianness);
-                        pixels[y][x].alpha16 = try row_reader.takeInt(u16, endianness);
+                        pixels[y][x].greyscale = try row_reader.takeInt(u16, endian);
+                        pixels[y][x].alpha16 = try row_reader.takeInt(u16, endian);
                     }
                 },
                 .Truecolor_with_alpha => {
@@ -161,10 +160,10 @@ pub fn parse(chunks: std.ArrayList(Chunks.Chunk), ihdr: IHDR, allocator: std.mem
                         pixels[y][x].alpha8 = try row_reader.takeByte();
                     }
                     else {
-                        pixels[y][x].r16 = try row_reader.takeInt(u16, endianness);
-                        pixels[y][x].g16 = try row_reader.takeInt(u16, endianness);
-                        pixels[y][x].b16 = try row_reader.takeInt(u16, endianness);
-                        pixels[y][x].alpha16 = try row_reader.takeInt(u16, endianness);
+                        pixels[y][x].r16 = try row_reader.takeInt(u16, endian);
+                        pixels[y][x].g16 = try row_reader.takeInt(u16, endian);
+                        pixels[y][x].b16 = try row_reader.takeInt(u16, endian);
+                        pixels[y][x].alpha16 = try row_reader.takeInt(u16, endian);
                     }
                 }
             }

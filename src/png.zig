@@ -1,8 +1,6 @@
 const std = @import("std");
 const fs = std.fs;
 
-pub const endianness: std.builtin.Endian = std.builtin.Endian.big;
-
 pub const Raw = @import("raw.zig");
 pub const Png = @This();
 

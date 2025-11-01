@@ -1,5 +1,4 @@
 const std = @import("std");
-const endianness = @import("png.zig").endianness;
 
 pub const Chunk = struct {
     length: u32,
@@ -21,13 +20,13 @@ pub const ChunkType = enum {
     tEXt
 };
 
-pub fn parse(reader: *std.io.Reader, allocator: std.mem.Allocator) !Chunk {
-    const length: u32 = try reader.takeInt(u32, endianness);
+pub fn parse(reader: *std.io.Reader, allocator: std.mem.Allocator, endian: std.builtin.Endian) !Chunk {
+    const length: u32 = try reader.takeInt(u32, endian);
     if (length >= 2_147_483_648) return error.InvalidChunkDataLength;
     const raw_type: [4]u8 = (try reader.takeArray(4)).*;
     const chunk_type: ?ChunkType = std.meta.stringToEnum(ChunkType, &raw_type);
     const data: []u8 = if (length != 0) try reader.take(length) else "";
-    const crc: u32 = try reader.takeInt(u32, endianness);
+    const crc: u32 = try reader.takeInt(u32, endian);
 
     if (chunk_type == null) {
         if (raw_type[0] >= 65 and raw_type[0] <= 90) return error.UnrecognizedCriticalChunk;

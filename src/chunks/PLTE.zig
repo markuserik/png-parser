@@ -1,6 +1,5 @@
 const std = @import("std");
 const Chunks = @import("../chunks.zig");
-const endianness = @import("../png.zig").endianness;
 
 const IHDR = @import("IHDR.zig");
 
