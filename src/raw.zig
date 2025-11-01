@@ -12,6 +12,7 @@ const cHRM = @import("chunks/cHRM.zig");
 const gAMA = @import("chunks/gAMA.zig");
 const iCCP = @import("chunks/iCCP.zig");
 const mDCV = @import("chunks/mDCV.zig");
+const cLLI = @import("chunks/cLLI.zig");
 const bKGD = @import("chunks/bKGD.zig");
 const tIME = @import("chunks/tIME.zig");
 const tEXt = @import("chunks/tEXt.zig");
@@ -34,6 +35,9 @@ pub const ChunkOrderingError = error{
     MultiplemDCV,
     PLTEBeforemDCV,
     IDATBeforemDCV,
+    MultiplecLLI,
+    PLTEBeforecLLI,
+    IDATBeforecLLI,
     MultiplebKGD,
     bKGDBeforePLTE,
     MultipletIME
@@ -48,6 +52,7 @@ chrm: ?cHRM,
 gama: ?gAMA,
 iccp: ?iCCP,
 mdcv: ?mDCV,
+clli: ?cLLI,
 bkgd: ?bKGD,
 time: ?tIME,
 text: []tEXt,
@@ -65,6 +70,7 @@ const InternalPng = struct {
     gama: ?gAMA = null,
     iccp: ?iCCP = null,
     mdcv: ?mDCV = null,
+    clli: ?cLLI = null,
     bkgd: ?bKGD = null,
     time: ?tIME = null,
     text: std.ArrayList(tEXt) = std.ArrayList(tEXt){}
@@ -150,6 +156,12 @@ pub fn parseRaw(raw_file: []u8, input_allocator: std.mem.Allocator) !Png {
                 if (png.idat != null) return ChunkOrderingError.IDATBeforemDCV;
                 png.mdcv = try mDCV.parse(chunk, endian);
             },
+            .cLLI => {
+                if (png.clli != null) return ChunkOrderingError.MultiplecLLI;
+                if (png.plte != null) return ChunkOrderingError.PLTEBeforecLLI;
+                if (png.idat != null) return ChunkOrderingError.IDATBeforecLLI;
+                png.clli = try cLLI.parse(chunk, endian);
+            },
             .bKGD => {
                 if (png.bkgd != null) return ChunkOrderingError.MultiplebKGD;
                 if (png.plte == null) return ChunkOrderingError.bKGDBeforePLTE;
@@ -173,6 +185,7 @@ pub fn parseRaw(raw_file: []u8, input_allocator: std.mem.Allocator) !Png {
         .gama = png.gama,
         .iccp = png.iccp,
         .mdcv = png.mdcv,
+        .clli = png.clli,
         .bkgd = png.bkgd,
         .time = png.time,
         .text = try png.text.toOwnedSlice(allocator),

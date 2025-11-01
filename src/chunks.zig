@@ -17,6 +17,7 @@ pub const ChunkType = enum {
     gAMA,
     iCCP,
     mDCV,
+    cLLI,
     bKGD,
     tIME,
     tEXt
