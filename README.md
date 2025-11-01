@@ -1,11 +1,15 @@
 # png-parser
 A zig parsing library for .png files.
 
+# Supported functionality
+Currently only images with color type Truecolor and Truecolor_with_alpha.
+Only images not relying on any ancilliary chunks are supported.
+Also, interlace method Adam7 is not supported.
+
 # Usage
-Add it to your project via this command, as there is no release yet this will
-add the repository at the latest commit which can potentially be unstable.
+Add it to your project via this command.
 ```sh
-zig fetch --save=png_parser git+https://github.com/markuserik/png-parser
+zig fetch --save=png_parser https://github.com/markuserik/png-parser/archive/0.1.0.tar.gz
 ```
 
 Then add these lines to your build.zig.

@@ -1,6 +1,6 @@
 .{
     .name = .png_parser,
-    .version = "0.0.0",
+    .version = "0.1.0",
     .fingerprint = 0x10a1e5f443ee219d,
     .minimum_zig_version = "0.15.1",
     .dependencies = .{
