@@ -88,7 +88,9 @@ pub fn parseRaw(raw_file: []u8, input_allocator: std.mem.Allocator) !Png {
     while (true) {
         const chunk: Chunks.Chunk = Chunks.parse(&reader, allocator) catch |err| switch (err) {
             error.EndOfStream => return error.CorruptPNG,
-            error.UnrecognizedNonCriticalChunk => continue,
+            error.UnrecognizedNonCriticalChunk => {
+                if (png.ihdr == null) return ChunkOrderingError.IHDRNotFirst else continue;
+            },
             else => return err
         };
 
