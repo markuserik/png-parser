@@ -14,12 +14,12 @@ pub fn parse(chunk: Chunks.Chunk, endian: std.builtin.Endian) !tIME {
     var reader: std.io.Reader = std.io.Reader.fixed(chunk.data);
     const year: u16 = try reader.takeInt(u16, endian);
     const month: u8 = try reader.takeByte();
-    if (month < 1 or month > 12) return error.InvalidMonth;
+    if (month == 0 or month > 12) return error.InvalidMonth;
 
     const day: u8 = try reader.takeByte();
-    if (day < 1 or day > 31) return error.InvalidDay;
+    if (day == 0 or day > 31) return error.InvalidDay;
 
-    const hour: u8= try reader.takeByte();
+    const hour: u8 = try reader.takeByte();
     if (hour > 23) return error.InvalidHour;
 
     const minute: u8 = try reader.takeByte();
