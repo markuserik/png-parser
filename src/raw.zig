@@ -176,6 +176,8 @@ pub fn parseRaw(raw_file: []u8, input_allocator: std.mem.Allocator) !Png {
         }
     }
 
+    if (png.ihdr.?.color_type == .Indexed_color and png.plte == null) return error.NoPLTEForIndexedColor;
+
     return Png{
         .ihdr = png.ihdr.?,
         .plte = png.plte,

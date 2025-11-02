@@ -84,7 +84,15 @@ fn parsePixels(raw_png: *Raw) ![][]Pixel {
                         pixels[y][x].a = 255;
                     }
                 },
-                .Indexed_color => return error.NotImplemented,
+                .Indexed_color => {
+                    if (bit_depth == 8) {
+                        const entry = raw_png.plte.?.entries[raw_pixels[y][x].index.?];
+                        pixels[y][x].r = entry.r;
+                        pixels[y][x].g = entry.g;
+                        pixels[y][x].b = entry.b;
+                    }
+                    else return error.BitDepthNotImplemented;
+                },
                 .Greyscale_with_alpha => {
                     if (bit_depth == 8) {
                         pixels[y][x].r = raw_pixels[y][x].greyscale8.?;
