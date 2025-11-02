@@ -117,10 +117,10 @@ pub fn parse(chunks: std.ArrayList(Chunk), ihdr: IHDR, allocator: std.mem.Alloca
             switch (ihdr.color_type) {
                 .Greyscale => {
                     if (ihdr.bit_depth == 8) {
-                        pixels[y][x].greyscale = try row_reader.takeByte();
+                        pixels[y][x].greyscale8 = try row_reader.takeByte();
                     }
                     else if (ihdr.bit_depth == 16) {
-                        pixels[y][x].greyscale = try row_reader.takeInt(u16, endian);
+                        pixels[y][x].greyscale16 = try row_reader.takeInt(u16, endian);
                     }
                     else return error.GreyscaleBitDepthNotImplemented;
                 },
@@ -144,11 +144,11 @@ pub fn parse(chunks: std.ArrayList(Chunk), ihdr: IHDR, allocator: std.mem.Alloca
                 },
                 .Greyscale_with_alpha => {
                     if (ihdr.bit_depth == 8) {
-                        pixels[y][x].greyscale = try row_reader.takeByte();
+                        pixels[y][x].greyscale8 = try row_reader.takeByte();
                         pixels[y][x].alpha8 = try row_reader.takeByte();
                     }
                     else {
-                        pixels[y][x].greyscale = try row_reader.takeInt(u16, endian);
+                        pixels[y][x].greyscale16 = try row_reader.takeInt(u16, endian);
                         pixels[y][x].alpha16 = try row_reader.takeInt(u16, endian);
                     }
                 },
@@ -209,7 +209,8 @@ pub const Pixel = struct {
     g16: ?u16 = null,
     b16: ?u16 = null,
 
-    greyscale: ?u16 = null,
+    greyscale8: ?u8 = null,
+    greyscale16: ?u16 = null,
 
     alpha8: ?u8 = null,
     alpha16: ?u16 = null,
