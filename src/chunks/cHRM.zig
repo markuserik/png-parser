@@ -13,7 +13,7 @@ blueX: u32,
 blueY: u32,
 
 pub fn parse(chunk: Chunk, endian: std.builtin.Endian) !cHRM {
-    var reader: std.io.Reader = std.io.Reader.fixed(chunk.data);
+    var reader: std.io.Reader = .fixed(chunk.data);
     return cHRM{
         .whitePointX = try reader.takeInt(u32, endian),
         .whitePointY = try reader.takeInt(u32, endian),

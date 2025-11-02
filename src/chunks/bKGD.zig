@@ -14,7 +14,7 @@ blue: ?u16 = null,
 palette_index: ?u8 = null,
 
 pub fn parse(chunk: Chunk, color_type: ColorType, endian: std.builtin.Endian) !bKGD {
-    var reader: std.io.Reader = std.io.Reader.fixed(chunk.data);
+    var reader: std.io.Reader = .fixed(chunk.data);
     switch (color_type) {
         .Greyscale,
         .Greyscale_with_alpha => {

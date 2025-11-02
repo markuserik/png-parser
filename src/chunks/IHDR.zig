@@ -33,23 +33,23 @@ pub const InterlaceMethod = enum(u8) {
 };
 
 pub fn parse(chunk: Chunk, endian: std.builtin.Endian) !IHDR {
-    var reader: std.io.Reader = std.io.Reader.fixed(chunk.data);
-    const width: u32 = try reader.takeInt(u32, endian);
+    var reader: std.io.Reader = .fixed(chunk.data);
+    const width = try reader.takeInt(u32, endian);
     if (width > 2_147_483_648 or width == 0) return error.InvalidWidth;
 
-    const height: u32 = try reader.takeInt(u32, endian);
+    const height = try reader.takeInt(u32, endian);
     if (height > 2_147_483_648 or height == 0) return error.InvalidHeight;
 
-    const bit_depth: u8 = try reader.takeByte();
+    const bit_depth = try reader.takeByte();
 
-    const color_type: ColorType = std.enums.fromInt(ColorType, try reader.takeByte()) orelse return error.InvalidColorType;
+    const color_type = std.enums.fromInt(ColorType, try reader.takeByte()) orelse return error.InvalidColorType;
     if (!try validateBitDepth(bit_depth, color_type)) return error.InvalidBitDepthColorTypeCombination;
 
-    const compression_method: CompressionMethod = std.enums.fromInt(CompressionMethod, try reader.takeByte()) orelse return error.InvalidCompressionMethod;
+    const compression_method = std.enums.fromInt(CompressionMethod, try reader.takeByte()) orelse return error.InvalidCompressionMethod;
 
-    const filter_method: FilterMethod = std.enums.fromInt(FilterMethod, try reader.takeByte()) orelse return error.InvalidFilterMethod;
+    const filter_method = std.enums.fromInt(FilterMethod, try reader.takeByte()) orelse return error.InvalidFilterMethod;
 
-    const interlace_method: InterlaceMethod = std.enums.fromInt(InterlaceMethod, try reader.takeByte()) orelse return error.InvalidInterlaceMethod;
+    const interlace_method = std.enums.fromInt(InterlaceMethod, try reader.takeByte()) orelse return error.InvalidInterlaceMethod;
 
     return IHDR{
         .width = width,

@@ -12,7 +12,7 @@ pub fn parse(chunks: std.ArrayList(Chunk), ihdr: IHDR, allocator: std.mem.Alloca
     if (ihdr.interlace_method == .Adam7) return error.Adam7InterlaceNotImplemented;
 
     const single_chunk = chunks.items.len == 1;
-    const data: []u8 = if (single_chunk) chunks.items[0].data else try concatChunks(chunks, allocator);
+    const data = if (single_chunk) chunks.items[0].data else try concatChunks(chunks, allocator);
     defer if (!single_chunk) allocator.free(data);
 
     var raw_reader: std.io.Reader = .fixed(data);
@@ -30,9 +30,9 @@ pub fn parse(chunks: std.ArrayList(Chunk), ihdr: IHDR, allocator: std.mem.Alloca
 
     bytes_per_pixel *= if (ihdr.color_type == .Truecolor_with_alpha) 4 else if (ihdr.color_type == .Greyscale_with_alpha) 2 else if (ihdr.color_type == .Indexed_color or ihdr.color_type == .Greyscale) 1 else 3;
 
-    const scanline_length: u32 = ihdr.width*bytes_per_pixel;
+    const scanline_length = ihdr.width*bytes_per_pixel;
 
-    var reconstructed_data: [][]u8 = try allocator.alloc([]u8, ihdr.height);
+    var reconstructed_data = try allocator.alloc([]u8, ihdr.height);
     for (0..reconstructed_data.len) |i| {
         reconstructed_data[i] = try allocator.alloc(u8, scanline_length);
     }
@@ -44,8 +44,8 @@ pub fn parse(chunks: std.ArrayList(Chunk), ihdr: IHDR, allocator: std.mem.Alloca
     }
 
     for (0..ihdr.height) |y| {
-        const filter_type: u8 = try reader.takeByte();
-        const line: []u8 = try reader.take(scanline_length);
+        const filter_type = try reader.takeByte();
+        const line = try reader.take(scanline_length);
         switch (filter_type) {
             0 => {
                 for (0..scanline_length) |x| {
@@ -105,7 +105,7 @@ pub fn parse(chunks: std.ArrayList(Chunk), ihdr: IHDR, allocator: std.mem.Alloca
         }
     }
  
-    var pixels: [][]Pixel = try allocator.alloc([]Pixel, ihdr.height);
+    var pixels = try allocator.alloc([]Pixel, ihdr.height);
     for (0..pixels.len) |i| {
         pixels[i] = try allocator.alloc(Pixel, ihdr.width);
         @memset(pixels[i], .{});
@@ -190,7 +190,7 @@ fn concatChunks(chunks: std.ArrayList(Chunk), allocator: std.mem.Allocator) ![]u
     var data_len: u32 = 0;
     for (chunks.items) |chunk| data_len += chunk.length;
 
-    const data: []u8 = try allocator.alloc(u8, data_len);
+    const data = try allocator.alloc(u8, data_len);
     var data_cursor: u32 = 0;
     for (chunks.items) |chunk| {
         for (0..chunk.length) |i| {

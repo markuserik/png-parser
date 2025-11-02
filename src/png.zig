@@ -15,14 +15,14 @@ pub fn deinit(self: *Png) void {
 }
 
 pub fn parseFileFromPath(file_path: []const u8, allocator: std.mem.Allocator) !Png {
-    const file: fs.File = try fs.cwd().openFile(file_path, .{});
+    const file = try fs.cwd().openFile(file_path, .{});
     defer file.close();
 
     return parseFile(file, allocator);
 }
 
 pub fn parseFile(file: fs.File, allocator: std.mem.Allocator) !Png {
-    const raw_file: []u8 = try allocator.alloc(u8, (try file.stat()).size);
+    const raw_file = try allocator.alloc(u8, (try file.stat()).size);
     _ = try file.read(raw_file);
     defer allocator.free(raw_file);
 
@@ -30,8 +30,8 @@ pub fn parseFile(file: fs.File, allocator: std.mem.Allocator) !Png {
 }
 
 pub fn parseRaw(raw_file: []u8, allocator: std.mem.Allocator) !Png {
-    var raw_png: Raw = try Raw.parseRaw(raw_file, allocator);
-    const pixels: [][]Pixel = try parsePixels(&raw_png);
+    var raw_png = try Raw.parseRaw(raw_file, allocator);
+    const pixels = try parsePixels(&raw_png);
     
     return Png{
         .width = raw_png.ihdr.width,
@@ -44,12 +44,12 @@ pub fn parseRaw(raw_file: []u8, allocator: std.mem.Allocator) !Png {
 
 fn parsePixels(raw_png: *Raw) ![][]Pixel {
     const allocator = raw_png.arena.allocator();
-    const height: u32 = raw_png.ihdr.height;
-    const width: u32 = raw_png.ihdr.width;
+    const height = raw_png.ihdr.height;
+    const width = raw_png.ihdr.width;
     const raw_pixels = raw_png.idat.pixels;
     const bit_depth = raw_png.ihdr.bit_depth;
 
-    var pixels: [][]Pixel = try allocator.alloc([]Pixel, height);
+    var pixels = try allocator.alloc([]Pixel, height);
     for (0..pixels.len) |y| {
         pixels[y] = try allocator.alloc(Pixel, width);
     }

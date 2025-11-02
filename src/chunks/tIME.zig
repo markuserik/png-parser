@@ -11,21 +11,21 @@ minute: u8,
 second: u8,
 
 pub fn parse(chunk: Chunk, endian: std.builtin.Endian) !tIME {
-    var reader: std.io.Reader = std.io.Reader.fixed(chunk.data);
-    const year: u16 = try reader.takeInt(u16, endian);
-    const month: u8 = try reader.takeByte();
+    var reader: std.io.Reader = .fixed(chunk.data);
+    const year = try reader.takeInt(u16, endian);
+    const month = try reader.takeByte();
     if (month == 0 or month > 12) return error.InvalidMonth;
 
-    const day: u8 = try reader.takeByte();
+    const day = try reader.takeByte();
     if (day == 0 or day > 31) return error.InvalidDay;
 
-    const hour: u8 = try reader.takeByte();
+    const hour = try reader.takeByte();
     if (hour > 23) return error.InvalidHour;
 
-    const minute: u8 = try reader.takeByte();
+    const minute = try reader.takeByte();
     if (minute > 59) return error.InvalidMinute;
 
-    const second: u8 = try reader.takeByte();
+    const second = try reader.takeByte();
     if (second > 60) return error.InvalidSecond;
 
     return tIME{

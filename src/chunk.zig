@@ -24,19 +24,19 @@ data: []u8,
 crc: u32,
 
 pub fn parse(reader: *std.io.Reader, allocator: std.mem.Allocator, endian: std.builtin.Endian) !Chunk {
-    const length: u32 = try reader.takeInt(u32, endian);
+    const length = try reader.takeInt(u32, endian);
     if (length >= 2_147_483_648) return error.InvalidChunkDataLength;
-    const raw_type: [4]u8 = (try reader.takeArray(4)).*;
-    const chunk_type: ?ChunkType = std.meta.stringToEnum(ChunkType, &raw_type);
+    const raw_type = (try reader.takeArray(4)).*;
+    const chunk_type = std.meta.stringToEnum(ChunkType, &raw_type);
     const data: []u8 = if (length != 0) try reader.take(length) else "";
-    const crc: u32 = try reader.takeInt(u32, endian);
+    const crc = try reader.takeInt(u32, endian);
 
     if (chunk_type == null) {
         if (raw_type[0] >= 65 and raw_type[0] <= 90) return error.UnrecognizedCriticalChunk;
         return error.UnrecognizedNonCriticalChunk;
     }
     
-    const crc_data: []u8 = try allocator.alloc(u8, data.len + 4);
+    const crc_data = try allocator.alloc(u8, data.len + 4);
     defer allocator.free(crc_data);
     inline for (0..4) |i| {
         crc_data[i] = raw_type[i];
@@ -58,7 +58,7 @@ pub fn parse(reader: *std.io.Reader, allocator: std.mem.Allocator, endian: std.b
 pub fn peekType(reader: *std.io.Reader) !?ChunkType {
     // The four first bytes of a chunk are the length so we must get the first 8
     // and only check the last four of the array
-    const raw_type: [8]u8 = (try reader.peekArray(8)).*;
+    const raw_type = (try reader.peekArray(8)).*;
     return std.meta.stringToEnum(ChunkType, raw_type[4..8]);
 }
 
@@ -78,7 +78,7 @@ fn createCRCTable() [256]u32 {
 }
 
 fn verifyCRC(data: []u8, crc: u32) bool {
-    const new_crc: u32 = createCRC(data);
+    const new_crc = createCRC(data);
     return crc == new_crc;
 }
 
