@@ -10,7 +10,7 @@ Also, interlace method Adam7 is not supported.
 # Usage
 Add it to your project via this command.
 ```sh
-zig fetch --save=png_decoder https://github.com/markuserik/png-decoder/archive/0.1.0.tar.gz
+zig fetch --save=png_decoder https://github.com/markuserik/png-decoder/archive/0.2.0.tar.gz
 ```
 
 Then add these lines to your build.zig.
