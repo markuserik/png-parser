@@ -1,8 +1,8 @@
 const std = @import("std");
 const fs = std.fs;
 
-const Chunks = @import("chunks.zig");
-const ChunkType = Chunks.ChunkType;
+const Chunk = @import("chunk.zig");
+const ChunkType = Chunk.ChunkType;
 
 const IHDR = @import("chunks/IHDR.zig");
 const PLTE = @import("chunks/PLTE.zig");
@@ -104,7 +104,7 @@ pub fn parseRaw(raw_file: []u8, input_allocator: std.mem.Allocator) !Png {
     if (signature != 0x89504E470D0A1A0A) return error.InvalidSignature;
 
     while (true) {
-        const chunk: Chunks.Chunk = Chunks.parse(&reader, allocator, endian) catch |err| switch (err) {
+        const chunk: Chunk = Chunk.parse(&reader, allocator, endian) catch |err| switch (err) {
             error.EndOfStream => return error.CorruptPNG,
             error.UnrecognizedNonCriticalChunk => if (png.ihdr == null) return ChunkOrderingError.IHDRNotFirst else continue,
             else => return err
@@ -123,10 +123,10 @@ pub fn parseRaw(raw_file: []u8, input_allocator: std.mem.Allocator) !Png {
             },
             .IDAT => {
                 if (png.idat != null) return ChunkOrderingError.NonSequentialIDAT;
-                var chunk_list: std.ArrayList(Chunks.Chunk) = try std.ArrayList(Chunks.Chunk).initCapacity(allocator, 1);
+                var chunk_list: std.ArrayList(Chunk) = try std.ArrayList(Chunk).initCapacity(allocator, 1);
                 try chunk_list.append(allocator, chunk);
-                while (try Chunks.peekType(&reader) == .IDAT) {
-                    try chunk_list.append(allocator, try Chunks.parse(&reader, allocator, endian));
+                while (try Chunk.peekType(&reader) == .IDAT) {
+                    try chunk_list.append(allocator, try Chunk.parse(&reader, allocator, endian));
                 }
                 png.idat = try IDAT.parse(chunk_list, png.ihdr.?, allocator, endian);
             },

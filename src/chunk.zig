@@ -1,11 +1,6 @@
 const std = @import("std");
 
-pub const Chunk = struct {
-    length: u32,
-    type: ChunkType,
-    data: []u8,
-    crc: u32
-};
+const Chunk = @This();
 
 pub const ChunkType = enum {
     IHDR,
@@ -22,6 +17,11 @@ pub const ChunkType = enum {
     tIME,
     tEXt
 };
+
+length: u32,
+type: ChunkType,
+data: []u8,
+crc: u32,
 
 pub fn parse(reader: *std.io.Reader, allocator: std.mem.Allocator, endian: std.builtin.Endian) !Chunk {
     const length: u32 = try reader.takeInt(u32, endian);

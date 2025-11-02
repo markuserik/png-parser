@@ -1,5 +1,5 @@
 const std = @import("std");
-const Chunks = @import("../chunks.zig");
+const Chunk = @import("../chunk.zig");
 
 const ColorType = @import("IHDR.zig").ColorType;
 
@@ -13,7 +13,7 @@ blue: ?u16 = null,
 
 palette_index: ?u8 = null,
 
-pub fn parse(chunk: Chunks.Chunk, color_type: ColorType, endian: std.builtin.Endian) !bKGD {
+pub fn parse(chunk: Chunk, color_type: ColorType, endian: std.builtin.Endian) !bKGD {
     var reader: std.io.Reader = std.io.Reader.fixed(chunk.data);
     switch (color_type) {
         .Greyscale,

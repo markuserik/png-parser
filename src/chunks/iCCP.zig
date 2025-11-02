@@ -1,13 +1,13 @@
 const std = @import("std");
 const flate = std.compress.flate;
-const Chunks = @import("../chunks.zig");
+const Chunk = @import("../chunk.zig");
 
 const iCCP = @This();
 
 profile_name: []u8,
 profile: []u8,
 
-pub fn parse(chunk: Chunks.Chunk, allocator: std.mem.Allocator) !iCCP {
+pub fn parse(chunk: Chunk, allocator: std.mem.Allocator) !iCCP {
     var raw_reader: std.io.Reader = .fixed(chunk.data);
     var profile_name: std.ArrayList(u8) = try .initCapacity(allocator, 1);
     while (raw_reader.takeByte()) |byte| {

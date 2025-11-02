@@ -1,5 +1,5 @@
 const std = @import("std");
-const Chunks = @import("../chunks.zig");
+const Chunk = @import("../chunk.zig");
 
 pub const MasteringDisplayColorPrimaryChromaticities = struct {
     rx: u16,
@@ -22,7 +22,7 @@ mastering_display_white_point_chromaticities: MasteringDisplayWhitePointChromati
 mastering_display_maximum_luminance: u32,
 mastering_display_minimum_luminance: u32,
 
-pub fn parse(chunk: Chunks.Chunk, endian: std.builtin.Endian) !mDCV {
+pub fn parse(chunk: Chunk, endian: std.builtin.Endian) !mDCV {
     var reader: std.io.Reader = .fixed(chunk.data);
 
     var mastering_display_color_primary_chromaticities: MasteringDisplayColorPrimaryChromaticities = undefined;

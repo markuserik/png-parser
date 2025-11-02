@@ -1,5 +1,5 @@
 const std = @import("std");
-const Chunks = @import("../chunks.zig");
+const Chunk = @import("../chunk.zig");
 
 const IHDR = @import("IHDR.zig");
 
@@ -7,7 +7,7 @@ const PLTE = @This();
 
 entries: []Entry,
 
-pub fn parse(chunk: Chunks.Chunk, color_type: IHDR.ColorType, allocator: std.mem.Allocator) !PLTE {
+pub fn parse(chunk: Chunk, color_type: IHDR.ColorType, allocator: std.mem.Allocator) !PLTE {
     if (color_type == .Greyscale or color_type == .Greyscale_with_alpha) return error.PLTEPresentForInvalidColorType;
 
     var plte: PLTE = undefined;

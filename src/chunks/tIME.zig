@@ -1,5 +1,5 @@
 const std = @import("std");
-const Chunks = @import("../chunks.zig");
+const Chunk = @import("../chunk.zig");
 
 pub const tIME = @This();
 
@@ -10,7 +10,7 @@ hour: u8,
 minute: u8,
 second: u8,
 
-pub fn parse(chunk: Chunks.Chunk, endian: std.builtin.Endian) !tIME {
+pub fn parse(chunk: Chunk, endian: std.builtin.Endian) !tIME {
     var reader: std.io.Reader = std.io.Reader.fixed(chunk.data);
     const year: u16 = try reader.takeInt(u16, endian);
     const month: u8 = try reader.takeByte();

@@ -1,5 +1,5 @@
 const std = @import("std");
-const Chunks = @import("../chunks.zig");
+const Chunk = @import("../chunk.zig");
 
 pub const cHRM = @This();
 
@@ -12,7 +12,7 @@ greenY: u32,
 blueX: u32,
 blueY: u32,
 
-pub fn parse(chunk: Chunks.Chunk, endian: std.builtin.Endian) !cHRM {
+pub fn parse(chunk: Chunk, endian: std.builtin.Endian) !cHRM {
     var reader: std.io.Reader = std.io.Reader.fixed(chunk.data);
     return cHRM{
         .whitePointX = try reader.takeInt(u32, endian),

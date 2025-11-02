@@ -1,5 +1,5 @@
 const std = @import("std");
-const Chunks = @import("../chunks.zig");
+const Chunk = @import("../chunk.zig");
 
 const IHDR = @This();
 
@@ -32,7 +32,7 @@ pub const InterlaceMethod = enum(u8) {
     Adam7 = 1
 };
 
-pub fn parse(chunk: Chunks.Chunk, endian: std.builtin.Endian) !IHDR {
+pub fn parse(chunk: Chunk, endian: std.builtin.Endian) !IHDR {
     var reader: std.io.Reader = std.io.Reader.fixed(chunk.data);
     const width: u32 = try reader.takeInt(u32, endian);
     if (width > 2_147_483_648 or width == 0) return error.InvalidWidth;

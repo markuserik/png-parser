@@ -1,12 +1,12 @@
 const std = @import("std");
-const Chunks = @import("../chunks.zig");
+const Chunk = @import("../chunk.zig");
 
 pub const tEXt = @This();
 
 keyword: []u8,
 text: []u8,
 
-pub fn parse(chunk: Chunks.Chunk, allocator: std.mem.Allocator) !tEXt {
+pub fn parse(chunk: Chunk, allocator: std.mem.Allocator) !tEXt {
     var reader: std.io.Reader = std.io.Reader.fixed(chunk.data);
     const keyword: []u8 = try reader.takeDelimiterExclusive(0);
     const text: []u8 = try reader.take(chunk.length - keyword.len - 1);
