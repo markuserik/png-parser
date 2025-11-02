@@ -57,7 +57,19 @@ fn parsePixels(raw_png: *Raw) ![][]Pixel {
     for (0..height) |y| {
         for (0..width) |x| {
             switch (raw_png.ihdr.color_type) {
-                .Greyscale => return error.NotImplemented,
+                .Greyscale => {
+                    if (bit_depth == 8) {
+                        pixels[y][x].r = raw_pixels[y][x].greyscale8.?;
+                        pixels[y][x].g = raw_pixels[y][x].greyscale8.?;
+                        pixels[y][x].b = raw_pixels[y][x].greyscale8.?;
+                    }
+                    else if(bit_depth == 16) {
+                        pixels[y][x].r = val16to8(raw_pixels[y][x].greyscale16.?);
+                        pixels[y][x].g = val16to8(raw_pixels[y][x].greyscale16.?);
+                        pixels[y][x].b = val16to8(raw_pixels[y][x].greyscale16.?);
+                    }
+                    else return error.BitDepthNotImplemented;
+                },
                 .Truecolor => {
                     if (bit_depth == 8) {
                         pixels[y][x].r = raw_pixels[y][x].r8.?;
@@ -73,7 +85,20 @@ fn parsePixels(raw_png: *Raw) ![][]Pixel {
                     }
                 },
                 .Indexed_color => return error.NotImplemented,
-                .Greyscale_with_alpha => return error.NotImplemented,
+                .Greyscale_with_alpha => {
+                    if (bit_depth == 8) {
+                        pixels[y][x].r = raw_pixels[y][x].greyscale8.?;
+                        pixels[y][x].g = raw_pixels[y][x].greyscale8.?;
+                        pixels[y][x].b = raw_pixels[y][x].greyscale8.?;
+                        pixels[y][x].a = raw_pixels[y][x].alpha8.?;
+                    }
+                    else if(bit_depth == 16) {
+                        pixels[y][x].r = val16to8(raw_pixels[y][x].greyscale16.?);
+                        pixels[y][x].g = val16to8(raw_pixels[y][x].greyscale16.?);
+                        pixels[y][x].b = val16to8(raw_pixels[y][x].greyscale16.?);
+                        pixels[y][x].a = val16to8(raw_pixels[y][x].alpha16.?);
+                    }
+                },
                 .Truecolor_with_alpha => {
                     if (bit_depth == 8) {
                         pixels[y][x].r = raw_pixels[y][x].r8.?;
