@@ -16,7 +16,6 @@ const bKGD = @import("chunks/bKGD.zig");
 const tIME = @import("chunks/tIME.zig");
 const tEXt = @import("chunks/tEXt.zig");
 
-const root = @import("png.zig");
 const endian: std.builtin.Endian = .big;
 
 pub const ChunkOrderingError = error{
