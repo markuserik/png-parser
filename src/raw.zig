@@ -2,7 +2,6 @@ const std = @import("std");
 const fs = std.fs;
 
 const Chunk = @import("chunk.zig");
-const ChunkType = Chunk.ChunkType;
 
 const IHDR = @import("chunks/IHDR.zig");
 const PLTE = @import("chunks/PLTE.zig");

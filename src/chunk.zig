@@ -2,7 +2,7 @@ const std = @import("std");
 
 const Chunk = @This();
 
-pub const ChunkType = enum {
+pub const Type = enum {
     IHDR,
     PLTE,
     IDAT,
@@ -19,7 +19,7 @@ pub const ChunkType = enum {
 };
 
 length: u32,
-type: ChunkType,
+type: Type,
 data: []u8,
 crc: u32,
 
@@ -27,7 +27,7 @@ pub fn parse(reader: *std.io.Reader, allocator: std.mem.Allocator, endian: std.b
     const length = try reader.takeInt(u32, endian);
     if (length >= 2_147_483_648) return error.InvalidChunkDataLength;
     const raw_type = (try reader.takeArray(4)).*;
-    const chunk_type = std.meta.stringToEnum(ChunkType, &raw_type);
+    const chunk_type = std.meta.stringToEnum(Type, &raw_type);
     const data: []u8 = if (length != 0) try reader.take(length) else "";
     const crc = try reader.takeInt(u32, endian);
 
@@ -55,11 +55,11 @@ pub fn parse(reader: *std.io.Reader, allocator: std.mem.Allocator, endian: std.b
     };
 }
 
-pub fn peekType(reader: *std.io.Reader) !?ChunkType {
+pub fn peekType(reader: *std.io.Reader) !?Type {
     // The four first bytes of a chunk are the length so we must get the first 8
     // and only check the last four of the array
     const raw_type = (try reader.peekArray(8)).*;
-    return std.meta.stringToEnum(ChunkType, raw_type[4..8]);
+    return std.meta.stringToEnum(Type, raw_type[4..8]);
 }
 
 const crc_table: [256]u32 = createCRCTable();
