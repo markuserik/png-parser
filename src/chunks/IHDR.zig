@@ -63,7 +63,7 @@ pub fn parse(chunk: Chunk, endian: std.builtin.Endian) !IHDR {
 }
 
 fn validateBitDepth(bit_depth: u8, color_type: ColorType) !bool {
-    if ((bit_depth % 2 != 0 and bit_depth != 1) or bit_depth > 16) return error.InvalidBitDepth;
+    if ((bit_depth % 2 != 0 and bit_depth != 1) or bit_depth > 16 or bit_depth == 0) return error.InvalidBitDepth;
     switch (color_type) {
         // 1, 2, 4, 8, 16
         .Greyscale => {},
