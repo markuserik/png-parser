@@ -15,7 +15,8 @@ pub const Type = enum {
     cLLI,
     bKGD,
     tIME,
-    tEXt
+    tEXt,
+    zTXt
 };
 
 length: u32,

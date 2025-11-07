@@ -15,6 +15,7 @@ const cLLI = @import("chunks/cLLI.zig");
 const bKGD = @import("chunks/bKGD.zig");
 const tIME = @import("chunks/tIME.zig");
 const tEXt = @import("chunks/tEXt.zig");
+const zTXt = @import("chunks/zTXt.zig");
 
 const endian: std.builtin.Endian = .big;
 
@@ -54,6 +55,7 @@ clli: ?cLLI,
 bkgd: ?bKGD,
 time: ?tIME,
 text: []tEXt,
+ztxt: []zTXt,
 arena: std.heap.ArenaAllocator,
 
 pub fn deinit(self: *Png) void {
@@ -71,7 +73,8 @@ const InternalPng = struct {
     clli: ?cLLI = null,
     bkgd: ?bKGD = null,
     time: ?tIME = null,
-    text: std.ArrayList(tEXt) = std.ArrayList(tEXt){}
+    text: std.ArrayList(tEXt) = std.ArrayList(tEXt){},
+    ztxt: std.ArrayList(zTXt) = std.ArrayList(zTXt){}
 };
 
 pub fn parseFileFromPath(file_path: []const u8, allocator: std.mem.Allocator) !Png {
@@ -171,6 +174,9 @@ pub fn parseRaw(raw_file: []u8, input_allocator: std.mem.Allocator) !Png {
             },
             .tEXt => {
                 try png.text.append(allocator, try .parse(chunk, allocator));
+            },
+            .zTXt => {
+                try png.ztxt.append(allocator, try .parse(chunk));
             }
         }
     }
@@ -189,6 +195,7 @@ pub fn parseRaw(raw_file: []u8, input_allocator: std.mem.Allocator) !Png {
         .bkgd = png.bkgd,
         .time = png.time,
         .text = try png.text.toOwnedSlice(allocator),
+        .ztxt = try png.ztxt.toOwnedSlice(allocator),
         .arena = arena
     };
 }
