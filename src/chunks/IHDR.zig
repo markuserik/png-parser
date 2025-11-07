@@ -50,6 +50,7 @@ pub fn parse(chunk: Chunk, endian: std.builtin.Endian) !IHDR {
     const filter_method = std.enums.fromInt(FilterMethod, try reader.takeByte()) orelse return error.InvalidFilterMethod;
 
     const interlace_method = std.enums.fromInt(InterlaceMethod, try reader.takeByte()) orelse return error.InvalidInterlaceMethod;
+    if (interlace_method == .Adam7) return error.Adam7InterlaceNotImplemented;
 
     return IHDR{
         .width = width,

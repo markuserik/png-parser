@@ -9,8 +9,6 @@ const IDAT = @This();
 pixels: [][]Pixel,
 
 pub fn parse(chunks: std.ArrayList(Chunk), ihdr: IHDR, allocator: std.mem.Allocator, endian: std.builtin.Endian) !IDAT {
-    if (ihdr.interlace_method == .Adam7) return error.Adam7InterlaceNotImplemented;
-
     const single_chunk = chunks.items.len == 1;
     const data = if (single_chunk) chunks.items[0].data else try concatChunks(chunks, allocator);
     defer if (!single_chunk) allocator.free(data);
