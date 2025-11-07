@@ -95,7 +95,7 @@ pub fn parse(chunks: std.ArrayList(Chunk), ihdr: IHDR, allocator: std.mem.Alloca
                             reconstructed_data[y][x] = line[x] +% paethPredictor(0, if (y != 0) reconstructed_data[y-1][x] else 0, 0);
                         }
                         for (bytes_per_pixel..scanline_length) |x| {
-                            reconstructed_data[y][x] = line[x] +% paethPredictor(reconstructed_data[y][x-bytes_per_pixel], reconstructed_data[y-1][x], reconstructed_data[y-1][x-bytes_per_pixel]);
+                            reconstructed_data[y][x] = line[x] +% paethPredictor(reconstructed_data[y][x-bytes_per_pixel], if (y != 0) reconstructed_data[y-1][x] else 0, if (y != 0) reconstructed_data[y-1][x-bytes_per_pixel] else 0);
                         }
                     },
                     else => return error.BitDepthNotImplemented
